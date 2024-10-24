@@ -5,4 +5,4 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def home():
-    return
+    return "GPT API Challenge"
