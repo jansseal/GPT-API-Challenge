@@ -4,6 +4,10 @@
   function getRandomRecipe() {
     alert("Fetching a new random recipe!");
   }
+
+  function searchRecipes() {
+    alert("Searching for recipes with: " + searchQuery);
+  }
 </script>
 
 <style>
@@ -58,6 +62,22 @@
     outline: none;
   }
 
+  /* Search button styling */
+  .search-button {
+    padding: 0.7em;
+    margin-left: 10px;
+    background-color: #388E3C;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  .search-button:hover {
+    background-color: #2E7D32;
+  }
+
   /* Recipe placeholder box styling */
   .recipe-placeholder {
     position: fixed;
@@ -87,7 +107,7 @@
   /* Dice button styling */
   .dice-button {
     position: fixed;
-    top: 170px; /* Increase this value to position it further below the recipe card */
+    top: 170px;
     right: 20px;
     background-color: #388E3C;
     color: white;
@@ -106,6 +126,14 @@
   .dice-button:hover {
     background-color: #2E7D32;
   }
+
+  /* Hide recipe box and dice button on small screens */
+  @media (max-width: 1200px) {
+    .recipe-placeholder,
+    .dice-button {
+      display: none;
+    }
+  }
 </style>
 
 <div class="page-container">
@@ -116,12 +144,15 @@
   <div class="content">
     <div class="search-section">
       <div class="prompt">What would you like to cook with today?</div>
-      <input
-        type="text"
-        bind:value={searchQuery}
-        class="search-input"
-        placeholder="Search ingredients..."
-      />
+      <div style="display: flex; align-items: center;">
+        <input
+          type="text"
+          bind:value={searchQuery}
+          class="search-input"
+          placeholder="Search ingredients..."
+        />
+        <button class="search-button" on:click="{searchRecipes}">Search</button>
+      </div>
     </div>
   </div>
 
@@ -134,7 +165,7 @@
   </div>
 
   <!-- Dice button positioned directly below the recipe placeholder -->
-  <button class="dice-button" on:click={getRandomRecipe} title="Get a Random Recipe">
+  <button class="dice-button" on:click="{getRandomRecipe}" title="Get a Random Recipe">
     🎲
   </button>
 </div>

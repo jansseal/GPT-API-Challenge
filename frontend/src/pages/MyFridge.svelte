@@ -155,6 +155,27 @@
   .add-btn:hover {
     background-color: #0056b3;
   }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* Default to 4 columns */
+    gap: 15px;
+    margin: 20px;
+  }
+
+  /* Adjust grid columns on medium screens */
+  @media (max-width: 900px) {
+    .grid {
+      grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+    }
+  }
+
+  /* Adjust grid columns on small screens */
+  @media (max-width: 600px) {
+    .grid {
+      grid-template-columns: repeat(1, 1fr); /* 1 column on small screens */
+    }
+  }
 </style>
 
 <div class="container">
