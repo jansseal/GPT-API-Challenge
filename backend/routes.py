@@ -12,9 +12,8 @@ def home():
 def create_recipe():
     data = request.get_json()
     
-    # Get the comma-separated string and parse it
-    ingredients_string = data.get('ingredients', '')
-    # Split by comma and strip whitespace from each ingredient
+    ingredients_string = data.get('ingredients', '') # I'm imagining this is a comma separated string of ingredients
+
     ingredient_list = [ing.strip() for ing in ingredients_string.split(',') if ing.strip()]
     
     if not ingredient_list:
@@ -23,3 +22,14 @@ def create_recipe():
     recipe = generate_recipe(ingredient_list)
     return jsonify(recipe)
 
+
+@main.route('/api/generate-recipe-from-fridge', methods=['POST']) 
+def generate_recipe_from_fridge():
+    data = request.get_json()
+    ingredients = data.get('fridge_ingredients', []) # I'm imagining this is a list of ingredients
+
+    if not ingredients:
+        return jsonify({"error": "No ingredients provided from fridge"}), 400
+
+    recipe = generate_recipe(ingredients)
+    return jsonify(recipe)
