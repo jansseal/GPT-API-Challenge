@@ -134,13 +134,6 @@
 </style>
 
 <div class="sidebar">
-  <button class="sidebar-button">Home</button>
-  <button class="sidebar-button">My Fridge</button>
-  <button class="sidebar-button">Profile</button>
-  <button class="sidebar-button">Favorites</button>
-</div>
-
-<div class="sidebar">
   <button class="sidebar-button" on:click={() => navigate("/")}>Home</button>
   <button class="sidebar-button" on:click={() => navigate("/my-fridge")}>My Fridge</button>
   <button class="sidebar-button" on:click={() => navigate("/profile")}>Profile</button>

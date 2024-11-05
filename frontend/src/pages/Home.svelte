@@ -35,6 +35,8 @@
     width: 100%;
     height: 70vh;
     padding-left: 50px;
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   /* Search Section Styling */
@@ -80,15 +82,14 @@
 
   /* Recipe placeholder box styling */
   .recipe-placeholder {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    width: 250px;
+    margin-top: 20px;
+    width: 370px; /* Matches width of search input and button */
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     background-color: #fff;
     text-align: left;
+    position: relative;
   }
 
   /* Recipe placeholder title styling */
@@ -104,35 +105,27 @@
     color: #555;
   }
 
-  /* Dice button styling */
+  /* Dice button styling inside recipe placeholder */
   .dice-button {
-    position: fixed;
-    top: 170px;
-    right: 20px;
+    position: absolute;
+    top: -20px;
+    left: -20px;
     background-color: #388E3C;
     color: white;
     border: none;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 40px;
+    height: 40px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    font-size: 1.5em;
+    font-size: 1.2em;
   }
 
   .dice-button:hover {
     background-color: #2E7D32;
-  }
-
-  /* Hide recipe box and dice button on small screens */
-  @media (max-width: 1200px) {
-    .recipe-placeholder,
-    .dice-button {
-      display: none;
-    }
   }
 </style>
 
@@ -154,18 +147,18 @@
         <button class="search-button" on:click="{searchRecipes}">Search</button>
       </div>
     </div>
-  </div>
 
-  <!-- Recipe Placeholder positioned in the top right -->
-  <div class="recipe-placeholder">
-    <h2>Random Recipe</h2>
-    <p>Recipe name: Placeholder Recipe</p>
-    <p>Ingredients: Avocado, Chicken, Corn</p>
-    <p>Instructions: Mix ingredients and cook.</p>
+    <!-- Recipe Placeholder positioned below the search bar -->
+    <div class="recipe-placeholder">
+      <!-- Dice button in the top-left corner of recipe placeholder -->
+      <button class="dice-button" on:click="{getRandomRecipe}" title="Get a Random Recipe">
+        🎲
+      </button>
+      <h2>Random Recipe</h2>
+      <p>Recipe name: Placeholder Recipe</p>
+      <p>Ingredients: Avocado, Chicken, Corn</p>
+      <p>Instructions: Mix ingredients and cook.</p>
+    </div>
   </div>
-
-  <!-- Dice button positioned directly below the recipe placeholder -->
-  <button class="dice-button" on:click="{getRandomRecipe}" title="Get a Random Recipe">
-    🎲
-  </button>
 </div>
+
