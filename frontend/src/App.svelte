@@ -1,43 +1,15 @@
 <script>
-  import { onMount } from 'svelte';
-  let items = [
-
-    { name: 'Avocado', icon: 'fa-avocado', selected: false },
-    { name: 'Bottle', icon: 'fa-bottle', selected: false },
-    { name: 'Chicken', icon: 'fa-chicken', selected: false },
-    { name: 'Corn', icon: 'fa-corn', selected: false },
-    { name: 'Cherry', icon: 'fa-cherry', selected: false },
-    { name: 'Orange', icon: 'fa-orange', selected: false },
-    { name: 'Apple', icon: 'fa-apple', selected: false },
-  ];
-
-  function deleteItem(index) {
-    items = items.filter((_, i) => i !== index);
-  }
-
-  function toggleSelect(index) {
-    items = items.map((item, i) => {
-      if (i === index) {
-        return { ...item, selected: !item.selected };
-      }
-      return item;
-    });
-  }
-
-  function addItem() {
-    if (newItem.trim() !== '') {
-      items = [...items, { name: newItem, icon: 'fa-plus', selected: false }];
-      newItem = '';
-    }
-  }
-
-  let newItem = '';
+  import { Router, Route, Link, navigate } from "svelte-routing";
+  import Home from "./pages/Home.svelte";
+  import MyFridge from "./pages/MyFridge.svelte";
+  import Favorites from "./pages/Favorites.svelte";
+  import Profile from "./pages/Profile.svelte";
 </script>
 
 <style>
   body {
     font-family: Arial, sans-serif;
-    background-color: #A5D6A7; /* Lighter green gradient background */
+    background-color: #A5D6A7;
     background: linear-gradient(135deg, #A5D6A7, #C8E6C9);
   }
 
@@ -162,30 +134,17 @@
 </style>
 
 <div class="sidebar">
-  <button class="sidebar-button">Home</button>
-  <button class="sidebar-button">My Fridge</button>
-  <button class="sidebar-button">Favorites</button>
-  <button class="sidebar-button">Profile</button>
+  <button class="sidebar-button" on:click={() => navigate("/")}>Home</button>
+  <button class="sidebar-button" on:click={() => navigate("/my-fridge")}>My Fridge</button>
+  <button class="sidebar-button" on:click={() => navigate("/profile")}>Profile</button>
+  <button class="sidebar-button" on:click={() => navigate("/favorites")}>Favorites (Coming Soon)</button>
 </div>
 
 <div class="container">
-  <h1>My Fridge</h1>
-  <div class="search-bar">
-    <input type="text" class="search-input" bind:value={newItem} placeholder="Add to your Fridge?" />
-    <button class="add-btn" on:click={addItem}>Add</button>
-  </div>
-  <div class="grid">
-    {#each items as item, index}
-      <div class="item {item.selected ? 'selected' : ''}">
-        <div class="item-icon"><i class="fa {item.icon}"></i></div>
-        <p>{item.name}</p>
-        <div class="buttons">
-          <button class="delete-btn" on:click={() => deleteItem(index)}>Delete</button>
-          <button class="select-btn" on:click={() => toggleSelect(index)}>
-            {item.selected ? 'Remove from List' : 'Add to List'}
-          </button>
-        </div>
-      </div>
-    {/each}
-  </div>
+  <Router>
+    <Route path="/" component={Home} />
+    <Route path="/my-fridge" component={MyFridge} />
+    <Route path="/profile" component={Profile} />
+    <Route path="/favorites" component={Favorites} />
+  </Router>
 </div>
