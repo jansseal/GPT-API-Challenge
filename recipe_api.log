@@ -1,0 +1,24 @@
+2024-11-05 14:43:12,896 - WARNING -  * Debugger is active!
+2024-11-05 14:43:12,898 - INFO -  * Debugger PIN: 461-850-107
+2024-11-05 14:43:12,901 - WARNING -  * Debugger is active!
+2024-11-05 14:43:12,903 - INFO -  * Debugger PIN: 461-850-107
+2024-11-05 14:43:29,294 - INFO - Generating recipe for: ['rice', 'mushroom', 'cinammon']
+2024-11-05 14:43:33,992 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2024-11-05 14:43:33,994 - INFO - Recipe successfully generated!
+2024-11-05 14:43:33,995 - INFO - Successfully processed recipe request
+2024-11-05 14:43:33,995 - INFO - 127.0.0.1 - - [05/Nov/2024 14:43:33] "POST /api/generate-recipe HTTP/1.1" 200 -
+2024-11-05 14:49:06,548 - INFO -  * Detected change in 'C:\\Users\\kevin.luk\\Documents\\GitHub\\GPT-API-Challenge\\backend\\chatgptAPI.py', reloading
+2024-11-05 14:49:06,551 - INFO -  * Detected change in 'C:\\Users\\kevin.luk\\Documents\\GitHub\\GPT-API-Challenge\\backend\\chatgptAPI.py', reloading
+2024-11-05 14:49:07,538 - WARNING -  * Debugger is active!
+2024-11-05 14:49:07,539 - WARNING -  * Debugger is active!
+2024-11-05 14:49:07,540 - INFO -  * Debugger PIN: 461-850-107
+2024-11-05 14:49:07,541 - INFO -  * Debugger PIN: 461-850-107
+2024-11-05 14:49:20,038 - INFO - Generating recipe for: ['rice', 'mushroom', 'cinammon']
+2024-11-05 14:49:24,275 - INFO - HTTP Request: POST https://api.openai.com/v1/chat/completions "HTTP/1.1 200 OK"
+2024-11-05 14:49:24,277 - INFO - Successfully received recipe from OpenAI
+2024-11-05 14:49:24,278 - INFO - Successfully processed recipe request
+2024-11-05 14:49:24,278 - INFO - 127.0.0.1 - - [05/Nov/2024 14:49:24] "POST /api/generate-recipe HTTP/1.1" 200 -
+2024-11-05 14:54:53,959 - INFO -  * Detected change in 'C:\\Users\\kevin.luk\\Documents\\GitHub\\GPT-API-Challenge\\backend\\chatgptAPI.py', reloading
+2024-11-05 14:54:53,971 - INFO -  * Detected change in 'C:\\Users\\kevin.luk\\Documents\\GitHub\\GPT-API-Challenge\\backend\\routes.py', reloading
+2024-11-05 14:54:54,956 - WARNING -  * Debugger is active!
+2024-11-05 14:54:54,958 - INFO -  * Debugger PIN: 461-850-107

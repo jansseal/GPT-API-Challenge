@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from .chatgptAPI import generate_recipe
+import logging
 
 main = Blueprint('main', __name__)
 
@@ -10,17 +11,28 @@ def home():
 
 @main.route('/api/generate-recipe', methods=['POST'])
 def create_recipe():
-    data = request.get_json()
-    
-    ingredients_string = data.get('ingredients', '') # I'm imagining this is a comma separated string of ingredients
-
-    ingredient_list = [ing.strip() for ing in ingredients_string.split(',') if ing.strip()]
-    
-    if not ingredient_list:
-        return jsonify({"error": "No ingredients provided"}), 400
+    try:
+        data = request.get_json()
+        ingredients_string = data.get('ingredients', '') # I'm imagining this is a list of ingredients
+        ingredient_list = [ing.strip() for ing in ingredients_string.split(',') if ing.strip()] # input sanitization
         
-    recipe = generate_recipe(ingredient_list)
-    return jsonify(recipe)
+        if not ingredient_list:
+            logging.warning("No ingredients provided in request")
+            return jsonify({"error": "No ingredients provided"}), 400
+            
+        recipe = generate_recipe(ingredient_list)
+        
+        if not recipe.get('success'):
+            logging.error(f"Failed to generate recipe: {recipe.get('error')}")
+            return jsonify(recipe), 500
+            
+        logging.info("Successfully processed recipe request")
+        
+        return jsonify(recipe)
+    
+    except Exception as e:
+        logging.error(f"Error in create_recipe: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 
 @main.route('/api/generate-recipe-from-fridge', methods=['POST']) 
