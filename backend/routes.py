@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, request
-from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.security import check_password_hash
 from backend import db
 from .models import User, Ingredient, Recipe
 
@@ -27,7 +27,7 @@ def login():
         db.session.close()
 
 
-# Add a new user (with password hashing)
+# Add a new user
 @main.route('/users', methods=['POST'])
 def add_user():
     data = request.get_json()
@@ -66,7 +66,7 @@ def get_user(user_id):
         db.session.close()
 
 
-# Update a user by ID (with password verification and/or hashing)
+# Update a user by ID (with password verification)
 @main.route('/users/<int:user_id>', methods=['PUT'])
 def update_user(user_id):
     try:
@@ -87,9 +87,7 @@ def update_user(user_id):
 
             # Update password if provided
             if 'new_user_password' in data:
-                user.user_password = generate_password_hash(
-                    data['new_user_password']
-                )
+                user.user_password = data['new_user_password']
 
             db.session.commit()
             return jsonify({
