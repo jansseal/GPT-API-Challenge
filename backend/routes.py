@@ -32,14 +32,10 @@ def login():
 def add_user():
     data = request.get_json()
     try:
-        hashed_password = generate_password_hash(
-            data['user_password'],
-            method='pbkdf2:sha256'
-        )
         new_user = User(
             user_name=data['user_name'],
             user_email=data['user_email'],
-            user_password=hashed_password
+            user_password=['user_password']
         )
         db.session.add(new_user)
         db.session.commit()
