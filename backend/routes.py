@@ -34,7 +34,7 @@ def add_user():
     try:
         hashed_password = generate_password_hash(
             data['user_password'],
-            method='sha256'
+            method='pbkdf2:sha256'
         )
         new_user = User(
             user_name=data['user_name'],
