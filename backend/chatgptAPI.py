@@ -1,24 +1,54 @@
 from flask import Flask, request, jsonify
-from openai import OpenAI
+from openai import OpenAI, OpenAIError
+import os
+from dotenv import load_dotenv
+import logging
 
-client = OpenAI(api_key="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")
+# logger config
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler('recipe_api.log'),
+        logging.StreamHandler()  
+    ]
+)
 
+load_dotenv()
+api_key = os.getenv("OPENAI_API_KEY")
 
+if not api_key:
+    logging.error("OpenAI API key not found in environment variables")
+    raise ValueError("OpenAI API key not configured")
 
-def generate_recipe(prompt):
-    # generate a new key later and store as env variable on personal machine
-    response = client.chat.completions.create(model="gpt-3.5-turbo",
-    messages=[
-        {"role": "system", "content": "You are a 1950's Italian Mobster who likes to speak in metaphors."},
-        {"role": "user", "content": prompt}
-    ],
-    temperature=0.7)
+client = OpenAI(api_key=api_key)
 
-    recipe = response.choices[0].message.content  
-    return recipe
+def generate_recipe(ingredients_list):
+    try:
+        logging.info(f"Generating recipe for: {ingredients_list}")
+        prompt = f"Create a recipe using some or all of these ingredients: {', '.join(ingredients_list)}. Include cooking time, ingredients with quantities, and step-by-step instructions."
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a professional chef. Provide recipes in a structured format with cooking time, ingredients list, and clear instructions. Including cooking tips and nutritional information."},
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.5
+        )
+
+        recipe = response.choices[0].message.content
+        logging.info("Successfully received recipe from OpenAI")
+        return {"success": True, "recipe": recipe}
+
+    except OpenAIError as e:
+        logging.error(f"OpenAI API error: {str(e)}")
+        return {"success": False, "error": "Failed to contact OpenAI service"}
+    except Exception as e:
+        logging.error(f"Unexpected error in generate_recipe: {str(e)}")
+        return {"success": False, "error": "Internal server error"}
 
 if __name__ == "__main__":
-    prompt = "Generate a recipe for pasta with tomato sauce."
-    recipe = generate_recipe(prompt)
+    ingredients_list = ["tomatoes", "pasta", "garlic", "olive oil", "basil"]
+    recipe = generate_recipe(ingredients_list)
     print(f"Generated Recipe: {recipe}")
-
