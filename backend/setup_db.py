@@ -1,8 +1,13 @@
-from backend import db, create_app
+from backend import create_app, db
 
 
-app = create_app()
-with app.app_context():
-    db.create_all()
+def setup_database():
+    app = create_app()
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+        print("Database tables recreated successfully!")
 
-print("Database tables created successfully!")
+
+if __name__ == "__main__":
+    setup_database()
