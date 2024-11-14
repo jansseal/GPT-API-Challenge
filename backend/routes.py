@@ -5,6 +5,7 @@ from flask import Blueprint, jsonify, request
 from werkzeug.security import check_password_hash
 from backend import db
 from .models import User, Ingredient, Recipe
+from sqlalchemy.exc import IntegrityError
 
 main = Blueprint('main', __name__)
 
@@ -66,6 +67,7 @@ def login():
                 'user_name': user.user_name}), 200
         return jsonify({'message': 'Invalid email or password'}), 401
     except Exception as e:
+        db.session.rollback()
         print(f'Error on login route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -88,6 +90,7 @@ def add_user():
             'id': new_user.user_id,
             'user_name': new_user.user_name}), 201
     except Exception as e:
+        db.session.rollback()
         print(f'Error on add_user route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -137,8 +140,10 @@ def update_user(user_id):
             db.session.commit()
             return jsonify({
                 'id': user.user_id, 'user_name': user.user_name}), 200
+        db.session.rollback()
         return jsonify({'message': 'User not found'}), 404
     except Exception as e:
+        db.session.rollback()
         print(f'Error on update_user route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -154,8 +159,10 @@ def delete_user(user_id):
             db.session.delete(user)
             db.session.commit()
             return jsonify({'message': 'User deleted successfully'}), 200
+        db.session.rollback()
         return jsonify({'message': 'User not found'}), 404
     except Exception as e:
+        db.session.rollback()
         print(f'Error on delete_user route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -176,7 +183,13 @@ def add_ingredient():
         return jsonify({
             'id': new_ingredient.ingredient_id,
             'name': new_ingredient.ingredient_name}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            'error': 'This ingredient already exists for the user.'
+        }), 400
     except Exception as e:
+        db.session.rollback()
         print(f'Error on add_ingredient route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -208,12 +221,14 @@ def delete_ingredient(ingredient_id):
             db.session.delete(ingredient)
             db.session.commit()
             return jsonify({'message': 'Ingredient deleted successfully'}), 200
+        db.session.rollback()
         return jsonify({'message': 'Ingredient not found'}), 404
     except Exception as e:
+        db.session.rollback()
         print(f'Error on delete_ingredients route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
-        db.session.close()    
+        db.session.close()
 
 
 # Add a new recipe
@@ -232,7 +247,13 @@ def add_recipe():
         return jsonify({
             'id': new_recipe.recipe_id,
             'name': new_recipe.recipe_name}), 201
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({
+            'error': 'This recipe already exists for the user.'
+        }), 400
     except Exception as e:
+        db.session.rollback()
         print(f'Error on add_recipe route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
@@ -285,8 +306,10 @@ def delete_recipe(recipe_id):
             db.session.delete(recipe)
             db.session.commit()
             return jsonify({'message': 'Recipe deleted successfully'}), 200
+        db.session.rollback()
         return jsonify({'message': 'Recipe not found'}), 404
     except Exception as e:
+        db.session.rollback()
         print(f'Error on delete_recipe route: {str(e)}')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
