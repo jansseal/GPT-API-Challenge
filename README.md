@@ -16,7 +16,11 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 ~~~
 pip install -r requirements.txt
 ~~~
-4. Run the Flask server to ensure there are no errors:
+4. Initialize the SQLite Database:
+~~~
+python -m backend.setup_db
+~~~
+5. Run the Flask server to ensure there are no errors:
 ~~~
 python run.py
 ~~~
