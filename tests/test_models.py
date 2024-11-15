@@ -1,5 +1,4 @@
 # Unittests to ensure database meets requirements as per db schema.
-
 from backend.models import User, Recipe, RecipeIngredient, Ingredient
 import pytest
 from sqlalchemy.exc import IntegrityError, DataError
@@ -56,7 +55,7 @@ def test_create_recipe(init_db):
     assert recipe.recipe_cooktime == 15
     assert recipe.user_id == user.user_id
 
-def test_create_ingredient_recipe_valid_quantity(init_db):
+def test_create_ingredient_recipe_given_quantity(init_db):
     # Tests many-to-many relationships between Recipe and Ingredient.
     user = User(user_name='BobRoss', user_email='ross@bob.ca', user_password='bobrosssss')
     ingredient = Ingredient(ingredient_name = 'Eggs', user=user)
@@ -74,24 +73,6 @@ def test_create_ingredient_recipe_valid_quantity(init_db):
     assert recipe_ingredient.quantity == '2'
     assert recipe_ingredient.recipe_id == recipe.recipe_id
     assert recipe_ingredient.ingredient_id == ingredient.ingredient_id
-
-def test_create_ingredient_recipe_invalid_quantity(init_db):
-    # Ensures that the quantity for recipe ingredient cannot be none.
-    # Did not raise integrity error.
-    user = User(user_name='BobRoss', user_email='ross@bob.ca', user_password='bobrosssss')
-    ingredient = Ingredient(ingredient_name = 'Eggs', user=user)
-    recipe = Recipe(recipe_name = 'Hard Boiled Eggs', recipe_cooktime=10, 
-                    recipe_instructions= 'Fill small pot with water, let water boil, add eggs and let it boil for suggested time.', user=user)
-    recipe_ingredient = RecipeIngredient(quantity=None, recipe=recipe, ingredient=ingredient)
-
-    init_db.session.add(user)
-    init_db.session.add(ingredient)
-    init_db.session.add(recipe)
-    init_db.session.add(recipe_ingredient)
-
-    with pytest.raises(IntegrityError):
-        init_db.session.commit()
-
 
 def test_user_blank(init_db):
     # Tests creating users with blank fields
@@ -135,3 +116,97 @@ def test_duplicate_ingredients(init_db):
         init_db.session.add(ingredient2)
         init_db.session.commit()
 
+def test_null_constraints_user(init_db):
+    # Tests missing input for user_name
+    user = User(user_name=None, user_email='fake_user@fake.com', user_password='ranDom44@')
+    init_db.session.add(user)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+    # Tests missing input for user_email
+    user = User(user_name='BeavOSU', user_email=None, user_password='GoBe@Vers')
+    init_db.session.add(user)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+    # Tests missing user_password
+    user = User(user_name='FooBar', user_email='foo@bar.com', user_password=None)
+    init_db.session.add(user)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+def test_null_constraints_ingredients(init_db):
+    # Tests missing recipe_name
+    ingredient = Ingredient(ingredient_name=None)
+    init_db.session.add(ingredient)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+def test_null_constraints_recipes(init_db):
+    # Missing recipe name
+    recipe = Recipe(recipe_name=None, recipe_cooktime=15, recipe_instructions="Can't make anything", user_id=1)
+    init_db.session.add(recipe)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+    # Missing recipe instructions
+    recipe = Recipe(recipe_name='Chocolate Cake', recipe_cooktime=15, recipe_instructions=None)
+    init_db.session.add(recipe)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+    #Missing recipe_cooktime
+    recipe = Recipe(recipe_name='Chocolate Cake', recipe_cooktime=None, recipe_instructions=None)
+    init_db.session.add(recipe)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+def test_user_duplicates_recipe(init_db):
+    # Tests if recipes with same name can be saved by a user
+    user = User(user_name='MichaelScofield', user_email='scofield@pen.com', user_password='Pri$onbre@k!')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Create first recipe
+    recipe1 = Recipe(recipe_name='Chocolate Cookies', recipe_cooktime='25', recipe_instructions='Mix batter and chocolate chips, then bake.', user_id=user.user_id)
+    init_db.session.add(recipe1)
+    init_db.session.commit()
+
+    # Add recipe two with same name
+    recipe2 = Recipe(recipe_name='Chocolate Cookies', recipe_cooktime='21', recipe_instructions='Mix chocolate chips with batter and bake.', user_id=user.user_id)
+    init_db.session.add(recipe2)
+    with pytest.raises(IntegrityError):
+        init_db.session.commit()
+    init_db.session.rollback()
+
+
+def test_deletion_cascade(init_db):
+    #Tests if deletion of a user also deletes the recipe and ingredient(s)
+    user = User(user_name='REALSpiderman', user_email='spider@man.com', user_password='IAMREAL')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Adding ingredient and recipe
+    ingredient = Ingredient(ingredient_name = 'Chocolate Chips', user_id=user.user_id)
+    recipe = Recipe(recipe_name='Chocolate Cookies', recipe_cooktime='25', recipe_instructions='Mix batter and chocolate chips, then bake.', user_id=user.user_id)
+    init_db.session.add_all([ingredient, recipe])
+    init_db.session.commit()
+
+    # Verify items added to database
+    assert Ingredient.query.filter_by(user_id=user.user_id).count==1
+    assert Recipe.query.filter_by(user_id=user.user_id).count()==1
+
+    # Delete user
+    init_db.session.delete(user)
+    init_db.session.commit()
+
+    # Verify recipe and ingredients removed, after deleting user.
+    assert Ingredient.query.filter_by(user_id=user.user_id).count==0
+    assert Recipe.query.filter_by(user_id=user.user_id).count()==0

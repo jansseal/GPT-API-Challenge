@@ -25,3 +25,4 @@ tqdm==4.66.5
 typing_extensions==4.12.2
 urllib3==1.26.20
 Werkzeug==3.0.4
+pytest==7.4.2
