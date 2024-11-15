@@ -3,12 +3,23 @@
 
 import sys
 import os
+import pytest
+
 
 # Add the project root directory to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from backend import create_app, db
-import pytest
+from unittest.mock import patch
+
+
+@pytest.fixture(scope='module', autouse=True)
+def mock_openai_key():
+    # Mock the OpenAI API key environment variable
+    with patch("os.getenv", return_value="mock_api_key"):
+        yield
+
+
 
 
 @pytest.fixture(scope='module')
