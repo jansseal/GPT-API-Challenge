@@ -52,6 +52,7 @@ def generate_recipe_from_fridge():
     recipe = generate_recipe(ingredients)
     return jsonify(recipe)
 
+
 # Existing user login (with password verification)
 @main.route('/login', methods=['POST'])
 def login():
@@ -62,14 +63,21 @@ def login():
             user.user_password,
             data['user_password']
         ):
+            logging.info(f'User "{user.user_email}" logged in successfully.')
             return jsonify({
                 'id': user.user_id,
                 'user_name': user.user_name}), 200
+
+        logging.warning(
+            f'Invalid login attempt for email: "{data['user_email']}".'
+        )
         return jsonify({'message': 'Invalid email or password'}), 401
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on login route: {str(e)}')
+        logging.error(f'Error on login route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -86,13 +94,16 @@ def add_user():
         )
         db.session.add(new_user)
         db.session.commit()
+        logging.info(f'User "{new_user.user_email}" created successfully.')
         return jsonify({
             'id': new_user.user_id,
             'user_name': new_user.user_name}), 201
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on add_user route: {str(e)}')
+        logging.error(f'Error on add_user route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -103,13 +114,20 @@ def get_user(user_id):
     try:
         user = User.query.get(user_id)
         if user:
+            logging.info(
+                f'User "{user.user_email}" account information loaded successfully.'
+            )
             return jsonify({
                 'user_name': user.user_name,
                 'user_email': user.user_email}), 200
+
+        logging.warning(f'User with ID #{user_id} not found.')
         return jsonify({'message': 'User not found'}), 404
+
     except Exception as e:
-        print(f'Error on get_user route: {str(e)}')
+        logging.error(f'Error on get_user route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -127,6 +145,7 @@ def update_user(user_id):
                 user.user_password,
                 data['current_user_password']
             ):
+                logging.warning(f'User "{user.user_email}" entered an incorrect current password.')
                 return jsonify({
                     'message': 'Current password is incorrect'}), 403
 
@@ -138,13 +157,17 @@ def update_user(user_id):
                 user.user_password = data['new_user_password']
 
             db.session.commit()
+            logging.info(f'User "{user.user_email}" updated account name and/or password successfully.')
             return jsonify({
                 'id': user.user_id, 'user_name': user.user_name}), 200
+
         db.session.rollback()
+        logging.warning(f'User with ID #{user_id} not found.')
         return jsonify({'message': 'User not found'}), 404
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on update_user route: {str(e)}')
+        logging.error(f'Error on update_user route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
     finally:
         db.session.close()
@@ -158,13 +181,18 @@ def delete_user(user_id):
         if user:
             db.session.delete(user)
             db.session.commit()
+            logging.info(f'User "{user.user_email}" deleted successfully.')
             return jsonify({'message': 'User deleted successfully'}), 200
+
         db.session.rollback()
+        logging.warning(f'User with ID #{user_id} not found.')
         return jsonify({'message': 'User not found'}), 404
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on delete_user route: {str(e)}')
+        logging.error(f'Error on delete_user route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -180,18 +208,23 @@ def add_ingredient():
         )
         db.session.add(new_ingredient)
         db.session.commit()
+        logging.info(f'User ID #{new_ingredient.user_id} added {new_ingredient.ingredient_name} successfully.')
         return jsonify({
             'id': new_ingredient.ingredient_id,
             'name': new_ingredient.ingredient_name}), 201
+
     except IntegrityError:
         db.session.rollback()
+        logging.error(f'User ID # {new_ingredient.user_id} tried to add duplicate ingredient "{new_ingredient.ingredient_name}".')
         return jsonify({
             'error': 'This ingredient already exists for the user.'
         }), 400
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on add_ingredient route: {str(e)}')
+        logging.error(f'Error on add_ingredient route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -201,13 +234,16 @@ def add_ingredient():
 def get_ingredients(user_id):
     try:
         ingredients = Ingredient.query.filter_by(user_id=user_id).all()
+        logging.info(f'All ingredients tied to user ID #{new_ingredient.user_id} loaded successfully.')
         return jsonify([{
             'id': ing.ingredient_id,
             'name': ing.ingredient_name}
             for ing in ingredients]), 200
+
     except Exception as e:
-        print(f'Error on get_ingredients route: {str(e)}')
+        logging.error(f'Error on get_ingredients route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -220,13 +256,18 @@ def delete_ingredient(ingredient_id):
         if ingredient:
             db.session.delete(ingredient)
             db.session.commit()
+            logging.info(f'User ID #{ingredient.user_id} deleted "{ingredient.ingredient_name}" successfully.')
             return jsonify({'message': 'Ingredient deleted successfully'}), 200
+
         db.session.rollback()
+        logging.warning(f'Ingredient with ID #{ingredient_id} not found.')
         return jsonify({'message': 'Ingredient not found'}), 404
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on delete_ingredients route: {str(e)}')
+        logging.error(f'Error on delete_ingredients route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -244,18 +285,23 @@ def add_recipe():
         )
         db.session.add(new_recipe)
         db.session.commit()
+        logging.info(f'User ID #{new_recipe.user_id} added recipe "{new_recipe.recipe_name}" successfully.')
         return jsonify({
             'id': new_recipe.recipe_id,
             'name': new_recipe.recipe_name}), 201
+
     except IntegrityError:
         db.session.rollback()
+        logging.error(f'User ID #{new_recipe.user_id} tried to add duplicate recipe "{new_recipe.recipe_name}".')
         return jsonify({
             'error': 'This recipe already exists for the user.'
         }), 400
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on add_recipe route: {str(e)}')
+        logging.error(f'Error on add_recipe route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -265,15 +311,18 @@ def add_recipe():
 def get_recipes(user_id):
     try:
         recipes = Recipe.query.filter_by(user_id=user_id).all()
+        logging.info(f'All recipes tied to user ID #{user_id} have loaded successfully.')
         return jsonify([{
             'id': recipe.recipe_id,
             'name': recipe.recipe_name,
             'cooktime': recipe.recipe_cooktime,
             'instructions': recipe.recipe_instructions}
             for recipe in recipes]), 200
+
     except Exception as e:
-        print(f'Error on get_recipes route: {str(e)}')
+        logging.error(f'Error on get_recipes route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -284,15 +333,20 @@ def get_recipe(recipe_id):
     try:
         recipe = Recipe.query.get(recipe_id)
         if recipe:
+            logging.info(f'User ID #{recipe.user_id} loaded recipe "{recipe.recipe_name}" successfully.')
             return jsonify({
                 'id': recipe.recipe_id,
                 'name': recipe.recipe_name,
                 'cooktime': recipe.recipe_cooktime,
                 'instructions': recipe.recipe_instructions}), 200
+
+        logging.warning(f'Recipe with ID #{recipe_id} not found.')
         return jsonify({'message': 'Recipe not found'}), 404
+
     except Exception as e:
-        print(f'Error on get_recipe route: {str(e)}')
+        logging.error(f'Error on get_recipe route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
 
@@ -305,13 +359,17 @@ def delete_recipe(recipe_id):
         if recipe:
             db.session.delete(recipe)
             db.session.commit()
+            logging.info(f'User ID #{recipe.user_id} deleted recipe "{recipe.recipe_name}" successfully.')
             return jsonify({'message': 'Recipe deleted successfully'}), 200
+
         db.session.rollback()
+        logging.warning(f'Recipe with ID #{recipe_id} not found.')
         return jsonify({'message': 'Recipe not found'}), 404
+
     except Exception as e:
         db.session.rollback()
-        print(f'Error on delete_recipe route: {str(e)}')
+        logging.error(f'Error on delete_recipe route: {str(e)}.')
         return jsonify({'message': 'Internal server error'}), 500
+
     finally:
         db.session.close()
-
