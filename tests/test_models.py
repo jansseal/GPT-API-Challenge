@@ -85,7 +85,7 @@ def test_user_empty(init_db):
         init_db.session.commit()
 
 
-def test_invalid_datatype(init_db):
+def test_invalid_user_datatype(init_db):
     # Tests invalid data types of user field (e.g. passing Int to Str)
     with pytest.raises(DataError):
         user = User(user_name=6784, user_email=38275, user_password=554000)
@@ -301,5 +301,64 @@ def test_recipe_instructions_constraints(init_db):
     # Test with less than 10 characters
     recipe = Recipe(recipe_name='Pumpkin Pie', recipe_cooktime=45, recipe_instructions='abcdefghi', user_id=user.user_id)
     with pytest.raises(ValueError, match='Recipe instructions must be at least 10 characters long'):
+        init_db.session.add(recipe)
+        init_db.session.commit()
+
+
+# Tests for invalid data types
+
+@pytest.mark.parametrize(
+ "user_name, user_email, user_password",
+ [
+     (874639, "fakeemails@fakes.ca", "P@sSwO0rd_3!"), # invalid user_name
+     ("SpamAccount", 32523, "ReDUndancy!!"), # invalid user_email
+     ("WeakPw", "Sample@Test.com", 214586), # invalid user_password
+ ]   
+)
+
+def test_invalid_user_datatype(init_db, user_name, user_email, user_password):
+    # Tests multiple invalid inputs. Contstraints are set in models.py
+    with pytest.raises(DataError):
+        user= User(user_name=user_name, user_email=user_email, user_password=user_password)
+        init_db.session.add(user)
+        init_db.session.commit()
+
+
+def test_invalid_ingredient_datatype(init_db):
+    # Create user
+    user = User(user_name='FooBarrr', user_email='Foo@testing.com', user_password='r3@LfO0Bar')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Add invalid ingredient_name
+    with pytest.raises(DataError):
+        ingredient = Ingredient(ingredient_name=694387, user_id=user.user_id)
+        init_db.session.add(ingredient)
+        init_db.session.commit()
+
+
+@pytest.mark.parametrize(
+    "recipe_name, recipe_cooktime, recipe_instructions",
+    [
+        (32463, 23, "Stir, pour, let it cook.") # Invalid recipe_name
+        ("Lasagna", "15", "Layer sheets, add toppings, bake.") #Invalid recipe_cooktime
+        ("Lasagna", 15, 243), # Invalid recipe_instructions
+    ],
+)
+
+def test_invalid_recipe_datatype(init_db, recipe_name, recipe_cooktime, recipe_instructions):
+    # Create user
+    user = User(user_name='FooBarrr', user_email='Foo@testing.com', user_password='r3@LfO0Bar')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    with pytest.raises(DataError):
+        recipe = Recipe(
+            recipe_name=recipe_name,
+            recipe_cooktime=recipe_cooktime,
+            recipe_instructions=recipe_instructions,
+            user_id=user.user_id,
+        )
+
         init_db.session.add(recipe)
         init_db.session.commit()
