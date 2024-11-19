@@ -6,6 +6,7 @@
   let signInPassword = "";
 
   // Form data for Sign Up
+  let signUpName = "";
   let signUpEmail = "";
   let signUpPassword = "";
   let confirmPassword = "";
@@ -25,7 +26,7 @@
   // Placeholder function for Sign Up
   function handleSignUp() {
     if (signUpPassword === confirmPassword) {
-      console.log("Creating account with:", { signUpEmail, signUpPassword });
+      console.log("Creating account with:", { signUpName, signUpEmail, signUpPassword });
       // Replace with actual sign-up logic
       navigate("/profile");
     } else {
@@ -106,6 +107,7 @@
   <div class="form-box">
     <h2>Create Account</h2>
     <form on:submit|preventDefault={handleSignUp}>
+      <input type="text" bind:value={signUpName} placeholder="Name" required />
       <input type="email" bind:value={signUpEmail} placeholder="Email" required />
       <input type="password" bind:value={signUpPassword} placeholder="Password" required />
       <input type="password" bind:value={confirmPassword} placeholder="Confirm Password" required />
