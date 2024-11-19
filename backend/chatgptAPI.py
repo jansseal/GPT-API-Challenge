@@ -38,7 +38,7 @@ def generate_recipe(ingredients, dietary_concerns=None):
         if dietary_concerns:
             base_prompt += f" The recipe must be suitable for {dietary_concerns} diet."
         
-        prompt = base_prompt + " Include cooking time, ingredients with quantities, and step-by-step instructions."
+        prompt = base_prompt + " Include cooking time, ingredients with quantities, and step-by-step instructions. Include nutritional information, and create formatted table for ingredients and nutritional information."
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
