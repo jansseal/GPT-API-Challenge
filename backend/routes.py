@@ -18,21 +18,23 @@ def home():
 def create_recipe():
     try:
         data = request.get_json()
-        ingredients_string = data.get('ingredients', '') # I'm imagining this is a list of ingredients
-        ingredient_list = [ing.strip() for ing in ingredients_string.split(',') if ing.strip()] # input sanitization
+        ingredients_string = data.get('ingredients', '')  # Expecting a string
+        dietary_concerns = data.get('dietary_concerns')
         
-        if not ingredient_list:
-            logging.warning("No ingredients provided in request")
-            return jsonify({"error": "No ingredients provided"}), 400
+        if not ingredients_string or not isinstance(ingredients_string, str):
+            logging.warning("No ingredients string provided in request")
+            return jsonify({"error": "Please provide ingredients as a comma-separated string"}), 400
             
-        recipe = generate_recipe(ingredient_list)
+        recipe = generate_recipe(
+            ingredients=ingredients_string,
+            dietary_concerns=dietary_concerns
+        )
         
         if not recipe.get('success'):
             logging.error(f"Failed to generate recipe: {recipe.get('error')}")
             return jsonify(recipe), 500
             
         logging.info("Successfully processed recipe request")
-        
         return jsonify(recipe)
     
     except Exception as e:
@@ -42,14 +44,30 @@ def create_recipe():
 
 @main.route('/api/generate-recipe-from-fridge', methods=['POST']) 
 def generate_recipe_from_fridge():
-    data = request.get_json()
-    ingredients = data.get('fridge_ingredients', []) # I'm imagining this is a list of ingredients
-
-    if not ingredients:
-        return jsonify({"error": "No ingredients provided from fridge"}), 400
-
-    recipe = generate_recipe(ingredients)
-    return jsonify(recipe)
+    try:
+        data = request.get_json()
+        ingredients_list = data.get('fridge_ingredients', [])  # Expecting a list
+        dietary_concerns = data.get('dietary_concerns')
+        
+        if not ingredients_list or not isinstance(ingredients_list, list):
+            logging.warning("No ingredients list provided in request")
+            return jsonify({"error": "Please provide ingredients as a list"}), 400
+            
+        recipe = generate_recipe(
+            ingredients=ingredients_list,
+            dietary_concerns=dietary_concerns
+        )
+        
+        if not recipe.get('success'):
+            logging.error(f"Failed to generate recipe: {recipe.get('error')}")
+            return jsonify(recipe), 500
+            
+        logging.info("Successfully processed recipe from fridge request")
+        return jsonify(recipe)
+        
+    except Exception as e:
+        logging.error(f"Error in generate_recipe_from_fridge: {str(e)}")
+        return jsonify({"error": "Internal server error"}), 500
 
 # Existing user login (with password verification)
 @main.route('/login', methods=['POST'])
