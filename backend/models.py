@@ -12,8 +12,19 @@ class User(db.Model):
     user_password = db.Column(db.String(255), nullable=False)
 
     # Relationships with Ingredient and Recipe
-    ingredients = db.relationship('Ingredient', backref='user', lazy=True)
-    recipes = db.relationship('Recipe', backref='user', lazy=True)
+    ingredients = db.relationship(
+        'Ingredient',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
+
+    recipes = db.relationship(
+        'Recipe',
+        backref='user',
+        lazy=True,
+        cascade='all, delete-orphan'
+    )
 
     @validates('user_name')
     def validate_user_name(self, key, user_name):
@@ -120,9 +131,9 @@ class Recipe(db.Model):
     @validates('recipe_cooktime')
     def validate_recipe_cooktime(self, key, recipe_cooktime):
         if recipe_cooktime is None:
-            raise ValueError("Recipe name cannot be null")
+            raise ValueError("Recipe cooktime cannot be null")
         if not isinstance(recipe_cooktime, int):
-            raise TypeError("Recipe name must be an integer")
+            raise TypeError("Recipe cooktime must be an integer")
         return recipe_cooktime
 
     @validates('recipe_instructions')
