@@ -202,34 +202,27 @@ def test_user_duplicates_recipe(init_db):
 
 def test_deletion_cascade(init_db):
     #Tests if deletion of a user also deletes the recipe and ingredient(s)
-    # TEST FAILED: NOT NULL constraint failed: ingredients.user_id
     user = User(user_name='REALSpiderman', user_email='spider@man.com', user_password='I@MREALlly6')
     init_db.session.add(user)
     init_db.session.commit()
 
     # Adding ingredient and recipe
-    ingredient = Ingredient(ingredient_name = 'Chocolate Chips', user_id=user.user_id)
-    recipe = Recipe(recipe_name='Chocolate Cookies', recipe_cooktime=25, recipe_instructions='Mix batter and chocolate chips, then bake.', user_id=user.user_id)
-    init_db.session.add_all([ingredient, recipe])
+    ingredient = Ingredient(ingredient_name = 'Chocolate Chips')
+    recipe = Recipe(recipe_name='Chocolate Cookies', recipe_cooktime=25, recipe_instructions='Mix batter and chocolate chips, then bake.')
+    user.ingredients.append(ingredient)
+    user.recipes.append(recipe)
     init_db.session.commit()
 
     # Verify items added to database
-    print(f"Ingredient count before deletion: {Ingredient.query.filter_by(user_id=user.user_id).count()}")
-    print(f"Recipe count before deletion: {Recipe.query.filter_by(user_id=user.user_id).count()}")
-
-    #assert Ingredient.query.filter_by(user_id=user.user_id).count()==1
-    #assert Recipe.query.filter_by(user_id=user.user_id).count()==1
+    assert Ingredient.query.filter_by(user_id=user.user_id).count()==1
+    assert Recipe.query.filter_by(user_id=user.user_id).count()==1
 
     # Delete user
     init_db.session.delete(user)
     init_db.session.commit()
 
-    # Print statements to show test is failing.
-    print(f"Ingredient count after deletion: {Ingredient.query.filter_by(user_id=user.user_id).count()}")
-    print(f"Recipe count after deletion: {Recipe.query.filter_by(user_id=user.user_id).count()}")
-
     # Verify recipe and ingredients removed, after deleting user.
-    assert Ingredient.query.filter_by(user_id=user.user_id).count==0
+    assert Ingredient.query.filter_by(user_id=user.user_id).count()==0
     assert Recipe.query.filter_by(user_id=user.user_id).count()==0
 
 
@@ -294,7 +287,7 @@ def test_recipe_cooktime_constraints(init_db):
         init_db.session.commit()
 
     # Test with Str
-    with pytest.raises(ValueError, match="Recipe cooktime must be an integer"):
+    with pytest.raises(TypeError, match="Recipe cooktime must be an integer"):
         recipe = Recipe(recipe_name='Pumpkin Pie', recipe_cooktime='36', recipe_instructions='mix, layer, and bake.', user_id=user.user_id)
         init_db.session.add(recipe)
         init_db.session.commit()
