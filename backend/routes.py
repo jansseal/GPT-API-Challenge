@@ -410,4 +410,3 @@ def delete_recipe(recipe_id):
 
     finally:
         db.session.close()
-        

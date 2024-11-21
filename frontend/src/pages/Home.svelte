@@ -1,17 +1,35 @@
 <script>
-  let searchQuery = "";
+  import { navigate } from "svelte-routing";
 
-  function getRandomRecipe() {
-    alert("Fetching a new random recipe!");
+  // State for sign-in status
+  let signedIn = false;
+
+  // User input and dietary restriction
+  let searchQuery = "";
+  let selectedRestriction = "";
+
+  // Dietary restriction options
+  const restrictions = ["None", "Gluten Free", "Low Calorie", "Keto"];
+
+  // Handle sign-in button click
+  function signIn() {
+    signedIn = true;
+    navigate("/my-fridge");
   }
 
+  // Handle search button click
   function searchRecipes() {
-    alert("Searching for recipes with: " + searchQuery);
+    const data = {
+      input: searchQuery,
+      restriction: selectedRestriction || "None",
+    };
+    console.log("Sending to backend:", JSON.stringify(data));
+    // Replace this with actual backend API call
+    alert(`Searching with input: "${data.input}" and restriction: "${data.restriction}"`);
   }
 </script>
 
 <style>
-  /* Main page layout */
   .page-container {
     display: flex;
     flex-direction: column;
@@ -20,7 +38,6 @@
     position: relative;
   }
 
-  /* Website title styling */
   .title {
     font-size: 2.5em;
     font-weight: bold;
@@ -28,7 +45,6 @@
     color: #388E3C;
   }
 
-  /* Layout for the main content below the title */
   .content {
     display: flex;
     justify-content: flex-start;
@@ -39,22 +55,24 @@
     align-items: flex-start;
   }
 
-  /* Search Section Styling */
   .search-section {
     display: flex;
     flex-direction: column;
-    justify-content: center;
     align-items: flex-start;
   }
 
-  /* Prompt text styling */
   .prompt {
     font-size: 1.5em;
     font-weight: 500;
     margin-bottom: 10px;
   }
 
-  /* Search input box styling */
+  .search-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
   .search-input {
     padding: 0.7em;
     width: 300px;
@@ -64,10 +82,8 @@
     outline: none;
   }
 
-  /* Search button styling */
   .search-button {
     padding: 0.7em;
-    margin-left: 10px;
     background-color: #388E3C;
     color: white;
     border: none;
@@ -80,10 +96,38 @@
     background-color: #2E7D32;
   }
 
-  /* Recipe placeholder box styling */
+  .restriction-dropdown {
+    padding: 0.7em;
+    border: 1px solid #388E3C;
+    border-radius: 8px;
+    font-size: 1em;
+  }
+
+  .sign-in-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #007BFF;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+
+  .sign-in-button:hover {
+    background-color: #0056b3;
+  }
+
+  .sign-in-message {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+  }
+
   .recipe-placeholder {
     margin-top: 20px;
-    width: 370px; /* Matches width of search input and button */
+    width: 370px;
     padding: 15px;
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
@@ -92,20 +136,6 @@
     position: relative;
   }
 
-  /* Recipe placeholder title styling */
-  .recipe-placeholder h2 {
-    font-size: 1.2em;
-    color: #388E3C;
-    margin-bottom: 10px;
-  }
-
-  /* Placeholder description text styling */
-  .recipe-placeholder p {
-    font-size: 0.9em;
-    color: #555;
-  }
-
-  /* Dice button styling inside recipe placeholder */
   .dice-button {
     position: absolute;
     top: -20px;
@@ -130,30 +160,49 @@
 </style>
 
 <div class="page-container">
-  <!-- Website title centered at the top -->
+  <!-- Sign-In Button -->
+  {#if !signedIn}
+    <button class="sign-in-button" on:click={() => navigate('/profile')}>
+      Sign In
+    </button>
+  {/if}
+
+
+  <!-- Website Title -->
   <div class="title">Fridge-Raider</div>
 
-  <!-- Content area for search section -->
+  <!-- Content Area -->
   <div class="content">
     <div class="search-section">
       <div class="prompt">What would you like to cook with today?</div>
-      <div style="display: flex; align-items: center;">
+      <div class="search-bar-container">
+        <!-- Search Input -->
         <input
           type="text"
           bind:value={searchQuery}
           class="search-input"
           placeholder="Search ingredients..."
         />
-        <button class="search-button" on:click="{searchRecipes}">Search</button>
+        <!-- Restriction Dropdown -->
+        <select bind:value={selectedRestriction} class="restriction-dropdown">
+          {#each restrictions as restriction}
+            <option value={restriction}>{restriction}</option>
+          {/each}
+        </select>
+        <!-- Search Button -->
+        <button class="search-button" on:click={searchRecipes}>Search</button>
       </div>
+      <!-- Sign-In Message for Guests -->
+      {#if !signedIn}
+  <div class="sign-in-message">
+    Sign in to save ingredients for faster recipe suggestions.
+  </div>
+{/if}
     </div>
 
-    <!-- Recipe Placeholder positioned below the search bar -->
+    <!-- Recipe Placeholder -->
     <div class="recipe-placeholder">
-      <!-- Dice button in the top-left corner of recipe placeholder -->
-      <button class="dice-button" on:click="{getRandomRecipe}" title="Get a Random Recipe">
-        🎲
-      </button>
+      <button class="dice-button" title="Get a Random Recipe">🎲</button>
       <h2>Random Recipe</h2>
       <p>Recipe name: Placeholder Recipe</p>
       <p>Ingredients: Avocado, Chicken, Corn</p>
@@ -161,4 +210,3 @@
     </div>
   </div>
 </div>
-
