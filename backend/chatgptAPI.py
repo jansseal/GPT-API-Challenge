@@ -23,10 +23,22 @@ if not api_key:
 
 client = OpenAI(api_key=api_key)
 
-def generate_recipe(ingredients_list):
+def generate_recipe(ingredients, dietary_concerns=None):
     try:
-        logging.info(f"Generating recipe for: {ingredients_list}")
-        prompt = f"Create a recipe using some or all of these ingredients: {', '.join(ingredients_list)}. Include cooking time, ingredients with quantities, and step-by-step instructions."
+        logging.info(f"Generating recipe for: {ingredients}")
+        
+        # Convert ingredients to string regardless of input type
+        if isinstance(ingredients, list):
+            ingredient_string = ', '.join(ingredients)
+        else:
+            ingredient_string = ingredients
+            
+        # Build prompt with dietary concerns if provided
+        base_prompt = f"Create a recipe using some or all of these ingredients: {ingredient_string}."
+        if dietary_concerns:
+            base_prompt += f" The recipe must be suitable for {dietary_concerns} diet."
+        
+        prompt = base_prompt + " Include cooking time, ingredients with quantities, and step-by-step instructions. Include nutritional information, and create formatted table for ingredients and nutritional information. The only ingredients that are not mentioned here that should be included are water/salt/pepper."
         
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
@@ -39,7 +51,11 @@ def generate_recipe(ingredients_list):
 
         recipe = response.choices[0].message.content
         logging.info("Successfully received recipe from OpenAI")
-        return {"success": True, "recipe": recipe}
+        return {
+            "success": True,
+            "recipe": recipe,
+            "dietary_concerns": dietary_concerns if dietary_concerns else "None specified"
+        }
 
     except OpenAIError as e:
         logging.error(f"OpenAI API error: {str(e)}")
@@ -50,5 +66,5 @@ def generate_recipe(ingredients_list):
 
 if __name__ == "__main__":
     ingredients_list = ["tomatoes", "pasta", "garlic", "olive oil", "basil"]
-    recipe = generate_recipe(ingredients_list)
+    recipe = generate_recipe(ingredients_list, dietary_concerns=None)
     print(f"Generated Recipe: {recipe}")
