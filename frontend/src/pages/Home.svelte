@@ -7,9 +7,11 @@
   // User input and dietary restriction
   let searchQuery = "";
   let selectedRestriction = "";
+  let generatedRecipe = null;
+  let errorMessage = "";
 
   // Dietary restriction options
-  const restrictions = ["None", "Gluten Free", "Low Calorie", "Keto"];
+  const restrictions = ["No Dietary Restrictions", "Gluten Free", "Low Calorie", "Keto"];
 
   // Handle sign-in button click
   function signIn() {
@@ -18,14 +20,40 @@
   }
 
   // Handle search button click
-  function searchRecipes() {
+  async function searchRecipes() {
+    const BACKEND_URL = 'http://localhost:5000'; 
     const data = {
-      input: searchQuery,
-      restriction: selectedRestriction || "None",
+      ingredients: searchQuery,
+      dietary_concerns: selectedRestriction || "None",
     };
     console.log("Sending to backend:", JSON.stringify(data));
-    // Replace this with actual backend API call
-    alert(`Searching with input: "${data.input}" and restriction: "${data.restriction}"`);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/generate-recipe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const recipe = await response.json();
+      if (recipe.success) {
+        generatedRecipe = recipe.recipe; 
+        errorMessage = "";
+      } else {
+        errorMessage = recipe.error || 'Failed to generate recipe';
+        generatedRecipe = null;
+      }
+    } catch (error) {
+      console.error('There was a problem with the fetch operation:', error);
+      errorMessage = 'An error occurred while generating the recipe.';
+      generatedRecipe = null;
+    }
   }
 </script>
 
@@ -174,7 +202,7 @@
   <!-- Content Area -->
   <div class="content">
     <div class="search-section">
-      <div class="prompt">What would you like to cook with today?</div>
+      <div class="prompt">What ingredients do you have to cook with today?</div>
       <div class="search-bar-container">
         <!-- Search Input -->
         <input
