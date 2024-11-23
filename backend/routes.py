@@ -21,11 +21,12 @@ def create_recipe():
 
         ingredients_string = data.get('ingredients', '')  # Expecting a string
         dietary_concerns = data.get('dietary_concerns')
-        
+
         if not ingredients_string or not isinstance(ingredients_string, str):
             logging.warning("No ingredients string provided in request")
-            return jsonify({"error": "Please provide ingredients as a comma-separated string"}), 400
-            
+            return jsonify({"error": "Please provide ingredients as a "
+                            "comma-separated string"}), 400
+
         recipe = generate_recipe(
             ingredients=ingredients_string,
             dietary_concerns=dietary_concerns
@@ -43,33 +44,34 @@ def create_recipe():
         return jsonify({"error": "Internal server error"}), 500
 
 
-@main.route('/api/generate-recipe-from-fridge', methods=['POST']) 
+@main.route('/api/generate-recipe-from-fridge', methods=['POST'])
 def generate_recipe_from_fridge():
     try:
         data = request.get_json()
-        ingredients_list = data.get('fridge_ingredients', [])  # Expecting a list
+        ingredients_list = data.get(
+            'fridge_ingredients', [])  # Expecting a list
         dietary_concerns = data.get('dietary_concerns')
-        
+
         if not ingredients_list or not isinstance(ingredients_list, list):
             logging.warning("No ingredients list provided in request")
-            return jsonify({"error": "Please provide ingredients as a list"}), 400
-            
+            return jsonify(
+                {"error": "Please provide ingredients as a list"}), 400
+
         recipe = generate_recipe(
             ingredients=ingredients_list,
             dietary_concerns=dietary_concerns
         )
-        
+
         if not recipe.get('success'):
             logging.error(f"Failed to generate recipe: {recipe.get('error')}")
             return jsonify(recipe), 500
-            
+
         logging.info("Successfully processed recipe from fridge request")
         return jsonify(recipe)
-        
+
     except Exception as e:
         logging.error(f"Error in generate_recipe_from_fridge: {str(e)}")
         return jsonify({"error": "Internal server error"}), 500
-
 
 
 # Existing user login (with password verification)
@@ -109,7 +111,7 @@ def add_user():
         new_user = User(
             user_name=data['user_name'],
             user_email=data['user_email'],
-            user_password=['user_password']
+            user_password=data['user_password']
         )
         db.session.add(new_user)
         db.session.commit()
