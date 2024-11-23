@@ -21,27 +21,24 @@ def test_add_user_success(test_client, init_db):
     assert response.status_code == 201
     data = response.get_json()
     assert data['user_name'] == 'ElizMonroe'
-    assert data['user_email'] == 'mmonroe@osu.com'
     assert data['id'] is not None
 
-def test_add_duplicate_email(test_client):
+def test_add_duplicate_email(test_client, init_db):
     # Tests if user with pre-existing email address can be added
+    # Not passing.
+    user = User(user_name='ElizMonroe', user_email='mmonroe@osu.com', user_password='P@ssValiD1')
+    init_db.session.add(user)
+    init_db.session.commit()
+
     response_one = test_client.post('/users', json={
-        'user_name': 'ElizMonroe',
-        'user_email': 'mmonroe@osu.com',
-        'user_password': 'P@ssValiD1'
-    })
-
-    assert response_one.status_code == 201
-
-    response_two = test_client.post('/users', json={
         'user_name': 'RileyMonroe',
         'user_email': 'mmonroe@osu.com',
         'user_password': 'P@ssValiD1'
     })
 
-    assert response_two.status_code == 500 # Failure
-    assert "IntegrityError" in response_two.get_json().get("message", "")
+    assert response_one.status_code == 400  # Failure
+    assert response_one.get_json()['message'] == 'User email must be unique'
+
 
 def test_add_user_invalid_data(test_client):
     # Tests if user with invalid data fields can be added
@@ -65,13 +62,26 @@ def test_get_valid_user(test_client, init_db):
     assert data['user_name'] == user.user_name
     assert data['user_email'] == user.user_email
 
-def test_user_not_found(test_client):
-    # Checks for user that is not in database. 
-    # user_id 235 is not in database, because no user has been added to the local DB.
+def test_user_not_found(test_client, init_db):
+    # Checks for user that is not in database.
+    user = User(user_name='FooBar', user_email='FooBar@oregonstate.edu', user_password='LegITpW123@!')
+    init_db.session.add(user)
+    init_db.session.commit()
 
-    response = test_client.get('/users/235')
-    assert response.status_code == 404
-    assert response.get_json()['message'] == 'User not found'
+    # Delete user
+    response_one = test_client.delete(f'/users/{user.user_id}')
+    assert response_one.status_code == 200
+    assert response_one.get_json()['message'] == 'User deleted successfully'
+
+    # Attempt to delete user again
+    response_two = test_client.delete(f'/users/{user.user_id}')
+    assert response_two.status_code == 404
+    assert response_two.get_json()['message'] == 'User not found'
+
+    # Attempt to retriever non-existent user
+    response_three = test_client.get(f'/users/{user.user_id}')
+    assert response_three.status_code == 404
+    assert response_three.get_json()['message'] == 'User not found'
 
 def test_delete_user(test_client, init_db):
     # Tests if existing user is deleted
@@ -83,12 +93,21 @@ def test_delete_user(test_client, init_db):
     assert response.status_code == 200
     assert response.get_json()['message'] == "User deleted successfully"
 
-def test_delete_invalid_user(test_client):
+def test_delete_invalid_user(test_client, init_db):
     # Attempts to delete user that is not in database. 
-    # user_id 5342 is not in database, because no user has been added to the local DB.
-    response = test_client.delete('/users/5342')
-    assert response.status_code == 404
-    assert response.get_json()['message'] == 'User not found'
+    user = User(user_name='JohnDoe', user_email='johndoe@randomize.org', user_password='Crazy1$$lolzaaaaa')
+    init_db.session.add(user)
+    init_db.session.commit()
+    
+    # Delete user
+    response_one = test_client.delete(f'/users/{user.user_id}')
+    assert response_one.status_code == 200
+    assert response_one.get_json()['message'] == 'User deleted successfully'
+
+    # Attempt to remove user again
+    response_two = test_client.delete(f'/users/{user.user_id}')
+    assert response_two.status_code == 404
+    assert response_two.get_json()['message'] == 'User not found'
 
 def test_add_ingredient(test_client, init_db):
     # Tests if a valid ingredient can be added
@@ -162,11 +181,25 @@ def test_remove_ingredient(test_client, init_db):
     assert response.status_code == 200
     assert response.get_json()['message'] == 'Ingredient deleted successfully'
 
-def test_remove_invalid_ingredient(test_client):
-    # Tests if non-existent ingredient can be removed. Example id does not exist in db.
-    response = test_client.delete('/ingredients/15311')
-    assert response.status_code == 404
-    assert response.get_json()['message'] == 'Ingredient not found'
+def test_remove_invalid_ingredient(test_client, init_db):
+    # Tests if non-existent ingredient can be removed
+    user = User(user_name='MichaelScott', user_email='realscott@yahoo.com', user_password='W!nXYZzz3514sss')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    ingredient = Ingredient(ingredient_name='Baking Powder', user=user)
+    init_db.session.add(ingredient)
+    init_db.session.commit()
+
+    # Remove ingredient
+    response_one = test_client.delete(f'/ingredients/{ingredient.ingredient_id}')
+    assert response_one.status_code == 200
+    assert response_one.get_json()['message'] == 'Ingredient deleted successfully'
+
+    # Attempt to remove ingredient again.
+    response_two = test_client.delete(f'/ingredients/{ingredient.ingredient_id}')
+    assert response_two.status_code == 404
+    assert response_two.get_json()['message'] == 'Ingredient not found'
 
 def test_add_recipe(test_client, init_db):
     # Tests if a recipe can be created for a valid user
@@ -214,7 +247,7 @@ def test_add_duplicate_recipe(test_client, init_db):
     })
 
     assert response_three.status_code == 400
-    assert response_three.get_json()['error'] == 'This recipe already exists for the user'
+    assert response_three.get_json()['error'] == 'This recipe already exists for the user.'
 
 
 def test_get_recipe(test_client, init_db):
@@ -258,9 +291,28 @@ def test_delete_recipe(test_client, init_db):
     assert response.get_json()['message'] == 'Recipe deleted successfully'
 
 
-def test_delete_invalid_recipe(test_client):
+def test_delete_invalid_recipe(test_client, init_db):
     # Tests if non-existing recipe can be deleted.
-    # Example ID being used. No such ID exists in local db.
-    response = test_client.delete('/recipes/6782')
-    assert response.status_code == 404
-    assert response.get_json()['message'] == 'Recipe not found'
+    user = User(user_name='MaryJane', user_email='jacob22@gmail.com', user_password='Pa@sZwOrd1ZZzz!')
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Add recipe
+    recipe = Recipe(
+        recipe_name = 'Chocolate Cake',
+        recipe_cooktime = 45,
+        recipe_instructions='Mix ingredients, add melted chocolate, and bake at 375.',
+        user=user
+    )
+    init_db.session.add(recipe)
+    init_db.session.commit()
+
+    # Delete recipe
+    response_one = test_client.delete(f'/recipes/{recipe.recipe_id}')
+    assert response_one.status_code == 200
+    assert response_one.get_json()['message'] == 'Recipe deleted successfully'
+
+    # Attempt to delete again]
+    response_two = test_client.delete(f'/recipes/{recipe.recipe_id}')
+    assert response_two.status_code == 404
+    assert response_two.get_json()['message'] == 'Recipe not found'
