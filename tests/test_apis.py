@@ -316,3 +316,157 @@ def test_delete_invalid_recipe(test_client, init_db):
     response_two = test_client.delete(f'/recipes/{recipe.recipe_id}')
     assert response_two.status_code == 404
     assert response_two.get_json()['message'] == 'Recipe not found'
+
+
+def test_update_user_success(test_client, init_db):
+    # Update user name and password with correct current password
+    user = User(user_name="TimothyEl", user_email="timoth@school.com", user_password="Gl@diat0r12!!")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    response = test_client.put(f'/users/{user.user_id}', json={
+        "current_user_password": "Gl@diat0r12!!",
+        "user_name": "TimothyElNew",
+        "new_user_password": "NEWGl@diat0r12!!"
+    })
+
+    assert response.status_code == 200
+    data = response.get_json()
+    assert data["id"] == user.user_id
+    assert data["user_name"] == "TimothyElNew"
+
+
+def test_update_user_invalid_password(test_client, init_db):
+    # Test updating a user with an incorrect password
+    user = User(user_name="BobCouzy", user_email="couzybob@bob.com", user_password="COuZyy123!@Couzy")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    response = test_client.put(f'/users/{user.user_id}', json={
+        "current_user_password": "COuZyy123!@",
+        "user_name": "CouzyBobEdit",
+        "new_user_password": "IwantNewP@SSw0Rd12!"
+    })
+
+    assert response.status_code == 403
+    assert response.get_json()["message"] == "Current password is incorrect"
+
+def test_update_user_not_found(test_client, init_db):
+    # Tests if a user not in database can be updated
+    user = User(user_name="TimothyEl", user_email="timoth@school.com", user_password="Gl@diat0r12!!")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Remove user
+    init_db.session.delete(user)
+    init_db.session.commit()
+
+    # Attempt to update user
+    response = test_client.put(f'/users/{user.user_id}', json={
+        "current_user_password": "Gl@diat0r12!!",
+        "user_name": "TimothElNew",
+        "new_user_password": "NEWGl@diat0r12!!"
+    })
+
+    assert response.status_code == 404
+    assert response.get_json()["message"] == "User not found"
+
+
+def test_get_ingredients_success(test_client,init_db):
+    # Retrieve ingredients for a valid user
+    user = User(user_name="ChefScooby", user_email="scooby@scoobysnacks.com", user_password="WhereRu321@")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    ingredient = Ingredient(ingredient_name="Rice grains", user=user)
+    init_db.session.add(ingredient)
+    init_db.session.commit()
+
+    response = test_client.get(f"/ingredients/{user.user_id}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 1 # User only has one ingredient
+    assert data[0]["name"] == 'Rice grains' # Verify it is the ingredient added
+
+def test_get_empty_ingredients(test_client,init_db):
+    # Retrieve ingredients user with no ingredients
+    user = User(user_name="ChefScooby", user_email="scooby@scoobysnacks.com", user_password="WhereRu321@")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    response = test_client.get(f"/ingredients/{user.user_id}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 0 # User has 0 ingredients
+
+
+def test_get_ingredients_user_dne(test_client,init_db):
+    # Test checks output for retrieving ingredient if user dne
+    user = User(user_name="SantaClause", user_email="gifts@christmasllc.com", user_password="Rudolph@541Deer")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Add ingredient associated to user
+    ingredient = Ingredient(ingredient_name="Beef Patty", user=user)
+    init_db.session.add(ingredient)
+    init_db.session.commit()
+
+    # Delete user
+    response_one = test_client.delete(f"/users/{user.user_id}")
+    assert response_one.status_code == 200
+    assert response_one.get_json()["message"] == "User deleted successfully"
+
+    # Attempt to retrieve users ingredient
+    response_two = test_client.get(f"/ingredients/{user.user_id}")
+    assert response_two.status_code == 404
+    assert response_two.get_json()["message"] == "Ingredient not found"
+
+
+def test_get_empty_recipes(test_client, init_db):
+    # Test retrieving recipes for user with no recipes
+    user = User(user_name="ChefShaggy", user_email="shaggy@scoobyempire.com", user_password="ShaggyScooby12$@")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    response = test_client.get(f"/recipes/{user.user_id}")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 0 # User has 0 recipes
+
+
+def test_get_recipes_user_dne(test_client,init_db):
+    # Test checks output for retrieving recipe if user does not exist
+    user = User(user_name="ChefShaggy", user_email="shaggy@scoobyempire.com", user_password="ShaggyScooby12$@")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Add ingredient associated to user
+    ingredient = Ingredient(ingredient_name="Potato", user=user)
+    init_db.session.add(ingredient)
+    init_db.session.commit()
+
+    # Add recipe associated to user using ingredient
+    recipe = Recipe(
+        recipe_name = "Potato Wedges",
+        recipe_cooktime=30,
+        recipe_instructions = "Soak potatose in hot water for 15 min, slice them up, apply oil, and air fry at 375",
+        user=user
+    )
+
+    init_db.session.add(recipe)
+    init_db.session.commit()
+
+    # Delete user
+    response_one = test_client.delete(f"/users/{user.user_id}")
+    assert response_one.status_code == 200
+    assert response_one.get_json()["message"] == "User deleted successfully"
+
+    # Attempt to retrieve users ingredient
+    response_two = test_client.get(f"/ingredients/{user.user_id}")
+    assert response_two.status_code == 404
+    assert response_two.get_json()["message"] == "Ingredient not found"
+
+    # Attempt to retreive users recipe
+    response_three = test_client.get(f"/recipes/{user.user_id}")
+    assert response_three.status_code == 404
+    assert response_three.get_json(["message"]) == "Recipe not found"
