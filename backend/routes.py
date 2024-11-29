@@ -108,6 +108,13 @@ def login():
 def add_user():
     data = request.get_json()
     try:
+        # Check for duplicate email
+        existing_user = User.query.filter_by(
+            user_email=data['user_email']).first()
+        if existing_user:
+            logging.warning(f'Duplicate email attempted: {data["user_email"]}')
+            return jsonify({'message': 'User email must be unique'}), 400
+
         new_user = User(
             user_name=data['user_name'],
             user_email=data['user_email'],
