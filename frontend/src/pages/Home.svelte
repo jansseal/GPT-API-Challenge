@@ -9,6 +9,7 @@
   let selectedRestriction = "";
   let generatedRecipe = null;
   let errorMessage = "";
+  let recipeName = ""; // New variable to store the recipe name
 
   // Dietary restriction options
   const restrictions = ["No Dietary Restrictions", "Gluten Free", "Low Calorie", "Keto"];
@@ -21,7 +22,7 @@
 
   // Handle search button click
   async function searchRecipes() {
-    const BACKEND_URL = 'http://localhost:5000'; 
+    const BACKEND_URL = 'http://localhost:5000';
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
@@ -43,7 +44,8 @@
 
       const recipe = await response.json();
       if (recipe.success) {
-        generatedRecipe = recipe.recipe; 
+        recipeName = recipe.recipe_name || 'Generated Recipe'; // Set recipe name
+        generatedRecipe = recipe.recipe;
         errorMessage = "";
       } else {
         errorMessage = recipe.error || 'Failed to generate recipe';
@@ -155,34 +157,49 @@
 
   .recipe-placeholder {
     margin-top: 20px;
-    width: 370px;
-    padding: 15px;
+    width: 100%;
+    max-width: 600px;
+    padding: 20px;
     border-radius: 8px;
     box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
     background-color: #fff;
     text-align: left;
-    position: relative;
+    line-height: 1.6;
+    font-size: 1.1em;
+    color: #333;
   }
 
-  .dice-button {
-    position: absolute;
-    top: -20px;
-    left: -20px;
+  .recipe-placeholder h3, .recipe-placeholder h4 {
+    color: #388E3C;
+    margin-bottom: 10px;
+  }
+
+  .recipe-placeholder p {
+    margin-bottom: 10px;
+  }
+
+  .recipe-placeholder ul {
+    list-style-type: disc;
+    padding-left: 20px;
+    margin-bottom: 10px;
+  }
+
+  .recipe-placeholder li {
+    margin-bottom: 5px;
+  }
+
+  .new-recipe-button {
+    margin-top: 20px;
+    padding: 0.7em;
     background-color: #388E3C;
     color: white;
     border: none;
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 8px;
     cursor: pointer;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    font-size: 1.2em;
+    font-size: 1em;
   }
 
-  .dice-button:hover {
+  .new-recipe-button:hover {
     background-color: #2E7D32;
   }
 </style>
@@ -194,7 +211,6 @@
       Sign In
     </button>
   {/if}
-
 
   <!-- Website Title -->
   <div class="title">Fridge-Raider</div>
@@ -222,19 +238,24 @@
       </div>
       <!-- Sign-In Message for Guests -->
       {#if !signedIn}
-  <div class="sign-in-message">
-    Sign in to save ingredients for faster recipe suggestions.
-  </div>
-{/if}
+        <div class="sign-in-message">
+          Sign in to save ingredients for faster recipe suggestions.
+        </div>
+      {/if}
     </div>
 
-    <!-- Recipe Placeholder -->
-    <div class="recipe-placeholder">
-      <button class="dice-button" title="Get a Random Recipe">🎲</button>
-      <h2>Random Recipe</h2>
-      <p>Recipe name: Placeholder Recipe</p>
-      <p>Ingredients: Avocado, Chicken, Corn</p>
-      <p>Instructions: Mix ingredients and cook.</p>
-    </div>
+    <!-- Recipe Display -->
+    {#if generatedRecipe}
+      <div class="recipe-placeholder">
+        <h2>{recipeName || 'Generated Recipe'}</h2> <!-- Display recipe name -->
+        {@html generatedRecipe}
+        <button class="new-recipe-button" on:click={searchRecipes}>Make New Recipe</button>
+      </div>
+    {:else if errorMessage}
+      <div class="recipe-placeholder">
+        <h2>Error</h2>
+        <p>{errorMessage}</p>
+      </div>
+    {/if}
   </div>
 </div>
