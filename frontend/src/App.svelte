@@ -1,13 +1,19 @@
 <script>
-  import { Router, Route, Link, navigate } from "svelte-routing";
+  import { Router, Route, navigate } from "svelte-routing";
   import Home from "./pages/Home.svelte";
   import MyFridge from "./pages/MyFridge.svelte";
   import Favorites from "./pages/Favorites.svelte";
   import Profile from "./pages/Profile.svelte";
+
+  const disclaimerText = `
+    Note: The recipes and suggestions provided by this app are AI-generated.
+    Always verify the safety and suitability of ingredients and instructions
+    according to your dietary needs, allergies, or preferences.
+  `;
 </script>
 
 <style>
-  body {
+  :global(body) {
     font-family: Arial, sans-serif;
     background-color: #A5D6A7;
     background: linear-gradient(135deg, #A5D6A7, #C8E6C9);
@@ -23,52 +29,17 @@
     border-radius: 10px;
   }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 15px;
-    margin: 20px;
-  }
-
-  .item {
-    background-color: #ffffff;
-    border-radius: 10px;
-    padding: 20px;
+  .disclaimer {
+    margin-top: 20px;
+    padding: 10px;
+    font-size: 0.9em;
+    color: #555;
+    background-color: #f9f9f9;
+    border-left: 4px solid #388E3C;
+    max-width: 90%;
     text-align: center;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    position: relative;
-  }
-
-  .item-icon {
-    font-size: 3em;
-  }
-
-  .buttons {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 10px;
-  }
-
-  .delete-btn {
-    background-color: #FF5252;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .select-btn {
-    background-color: #4CAF50;
-    color: white;
-    border: none;
-    padding: 5px 10px;
-    border-radius: 5px;
-    cursor: pointer;
-  }
-
-  .selected {
-    box-shadow: 0px 4px 8px rgba(255, 165, 0, 0.8);
+    border-radius: 8px;
+    box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
   }
 
   .sidebar {
@@ -100,37 +71,6 @@
   .sidebar-button:hover {
     background-color: #2E7D32;
   }
-
-  .search-bar {
-    margin-top: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .search-input {
-    padding: 0.7em;
-    width: 300px;
-    border: 1px solid #388E3C;
-    border-radius: 8px;
-    font-size: 1em;
-  }
-
-  .add-btn {
-    margin-left: 10px;
-    padding: 0.7em;
-    font-size: 1em;
-    border: none;
-    border-radius: 8px;
-    background-color: #007BFF;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-  }
-
-  .add-btn:hover {
-    background-color: #0056b3;
-  }
 </style>
 
 <div class="sidebar">
@@ -147,4 +87,9 @@
     <Route path="/profile" component={Profile} />
     <Route path="/favorites" component={Favorites} />
   </Router>
+
+  <!-- Disclaimer Section -->
+  <div class="disclaimer">
+    {disclaimerText}
+  </div>
 </div>

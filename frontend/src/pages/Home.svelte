@@ -75,12 +75,16 @@
 </script>
 
 <style>
+
   .page-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding-top: 20px;
+    padding-bottom: 50px; /* Add extra space at the bottom */
     position: relative;
+    min-height: 100vh; /* Ensures it covers at least the viewport height */
+    box-sizing: border-box; /* Includes padding in height calculations */
   }
 
   .title {
@@ -94,8 +98,6 @@
     display: flex;
     justify-content: flex-start;
     width: 100%;
-    height: 70vh;
-    padding-left: 50px;
     flex-direction: column;
     align-items: flex-start;
   }
@@ -190,8 +192,7 @@
     background-color: #ffe6e6;
   }
 
-  .recipe-placeholder h3,
-  .recipe-placeholder h4 {
+  .recipe-placeholder h3 {
     color: #388e3c;
     font-size: 1.5em;
     margin-bottom: 10px;
