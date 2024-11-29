@@ -12,7 +12,19 @@
   let recipeName = ""; // New variable to store the recipe name
 
   // Dietary restriction options
-  const restrictions = ["No Dietary Restrictions", "Gluten Free", "Low Calorie", "Keto"];
+  const restrictions = [
+  "No Dietary Restrictions",
+  "Gluten Free",
+  "Low Calorie",
+  "Keto",
+  "Vegetarian",
+  "Vegan",
+  "Pescatarian",
+  "Dairy Free",
+  "Nut Free",
+  "Paleo",
+  "Low Carb"
+];
 
   // Handle sign-in button click
   function signIn() {
@@ -22,7 +34,7 @@
 
   // Handle search button click
   async function searchRecipes() {
-    const BACKEND_URL = 'http://localhost:5000';
+    const BACKEND_URL = 'http://127.0.0.1:5000';
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
@@ -156,37 +168,36 @@
   }
 
   .recipe-placeholder {
-    margin-top: 20px;
-    width: 100%;
-    max-width: 600px;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
-    background-color: #fff;
-    text-align: left;
-    line-height: 1.6;
-    font-size: 1.1em;
-    color: #333;
-  }
+  margin-top: 20px;
+  width: 90%; /* Maintain horizontal space */
+  max-width: 1200px;
+  padding: 20px; /* Reduce padding */
+  border-radius: 8px; /* Slightly smaller border radius */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+  background-color: #fff;
+  text-align: left;
+  line-height: 1.4; /* Tighten line spacing */
+  font-size: 1em; /* Decrease font size */
+  color: #333;
+}
 
-  .recipe-placeholder h3, .recipe-placeholder h4 {
-    color: #388E3C;
-    margin-bottom: 10px;
-  }
+.recipe-placeholder h3, .recipe-placeholder h4 {
+  color: #388E3C;
+  font-size: 1.5em; /* Smaller headings */
+  margin-bottom: 10px; /* Less spacing under headings */
+}
 
-  .recipe-placeholder p {
-    margin-bottom: 10px;
-  }
+.recipe-placeholder p, .recipe-placeholder ul, .recipe-placeholder li {
+  font-size: 1em; /* Match body font size */
+}
 
-  .recipe-placeholder ul {
-    list-style-type: disc;
-    padding-left: 20px;
-    margin-bottom: 10px;
-  }
+.recipe-placeholder ul {
+  padding-left: 20px; /* Reduce list indentation */
+}
 
-  .recipe-placeholder li {
-    margin-bottom: 5px;
-  }
+.recipe-placeholder li {
+  margin-bottom: 5px; /* Less spacing between list items */
+}
 
   .new-recipe-button {
     margin-top: 20px;
@@ -207,7 +218,7 @@
 <div class="page-container">
   <!-- Sign-In Button -->
   {#if !signedIn}
-    <button class="sign-in-button" on:click={() => navigate('/profile')}>
+    <button class="sign-in-button" on:click={signIn}>
       Sign In
     </button>
   {/if}
@@ -220,23 +231,19 @@
     <div class="search-section">
       <div class="prompt">What ingredients do you have to cook with today?</div>
       <div class="search-bar-container">
-        <!-- Search Input -->
         <input
-          type="text"
-          bind:value={searchQuery}
-          class="search-input"
-          placeholder="Search ingredients..."
+            type="text"
+            bind:value={searchQuery}
+            class="search-input"
+            placeholder="Search ingredients..."
         />
-        <!-- Restriction Dropdown -->
         <select bind:value={selectedRestriction} class="restriction-dropdown">
-          {#each restrictions as restriction}
+            {#each restrictions as restriction}
             <option value={restriction}>{restriction}</option>
-          {/each}
+            {/each}
         </select>
-        <!-- Search Button -->
-        <button class="search-button" on:click={searchRecipes}>Search</button>
-      </div>
-      <!-- Sign-In Message for Guests -->
+  <button class="search-button" on:click={searchRecipes}>Search</button>
+</div>
       {#if !signedIn}
         <div class="sign-in-message">
           Sign in to save ingredients for faster recipe suggestions.
@@ -244,11 +251,54 @@
       {/if}
     </div>
 
-    <!-- Recipe Display -->
     {#if generatedRecipe}
       <div class="recipe-placeholder">
-        <h2>{recipeName || 'Generated Recipe'}</h2> <!-- Display recipe name -->
-        {@html generatedRecipe}
+        <!-- Recipe Name -->
+        <h2>{generatedRecipe.recipe_name || 'Generated Recipe'}</h2>
+
+        <!-- Cooking Time -->
+        <div class="recipe-section">
+          <h3>Cooking Time</h3>
+          <p>{generatedRecipe.cooking_time} minutes</p>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="recipe-section">
+          <h3>Ingredients</h3>
+          <ul>
+            {#each generatedRecipe.ingredients as ingredient}
+              <li>{ingredient.quantity} {ingredient.unit} {ingredient.ingredient}</li>
+            {/each}
+          </ul>
+        </div>
+
+        <!-- Instructions -->
+        <div class="recipe-section">
+          <h3>Instructions</h3>
+          <ol>
+            {#each generatedRecipe.instructions as step}
+              <li>{step}</li>
+            {/each}
+          </ol>
+        </div>
+
+        <!-- Nutritional Information -->
+        <div class="recipe-section">
+          <h3>Nutritional Information</h3>
+          <ul>
+            <li>Calories: {generatedRecipe.nutritional_info.calories}</li>
+            <li>Protein: {generatedRecipe.nutritional_info.protein}</li>
+            <li>Fat: {generatedRecipe.nutritional_info.fat}</li>
+            <li>Carbohydrates: {generatedRecipe.nutritional_info.carbohydrates}</li>
+          </ul>
+        </div>
+
+        <!-- Cooking Tips -->
+        <div class="recipe-section">
+          <h3>Cooking Tips</h3>
+          <p>{generatedRecipe.cooking_tips}</p>
+        </div>
+
         <button class="new-recipe-button" on:click={searchRecipes}>Make New Recipe</button>
       </div>
     {:else if errorMessage}
