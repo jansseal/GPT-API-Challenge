@@ -6,25 +6,27 @@
 
   // User input and dietary restriction
   let searchQuery = "";
-  let selectedRestriction = "";
+  let selectedRestriction = "No Dietary Restrictions";
   let generatedRecipe = null;
   let errorMessage = "";
-  let recipeName = ""; // New variable to store the recipe name
+  let loading = false;
 
   // Dietary restriction options
   const restrictions = [
-  "No Dietary Restrictions",
-  "Gluten Free",
-  "Low Calorie",
-  "Keto",
-  "Vegetarian",
-  "Vegan",
-  "Pescatarian",
-  "Dairy Free",
-  "Nut Free",
-  "Paleo",
-  "Low Carb"
-];
+    "No Dietary Restrictions",
+    "Gluten Free",
+    "Low Calorie",
+    "Keto",
+    "Vegetarian",
+    "Vegan",
+    "Pescatarian",
+    "Dairy Free",
+    "Nut Free",
+    "Paleo",
+    "Low Carb"
+  ];
+
+  const BACKEND_URL = "http://127.0.0.1:5000";
 
   // Handle sign-in button click
   function signIn() {
@@ -34,39 +36,40 @@
 
   // Handle search button click
   async function searchRecipes() {
-    const BACKEND_URL = 'http://127.0.0.1:5000';
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
     };
     console.log("Sending to backend:", JSON.stringify(data));
 
+    loading = true;
+    errorMessage = "";
+    generatedRecipe = null;
+
     try {
       const response = await fetch(`${BACKEND_URL}/api/generate-recipe`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       const recipe = await response.json();
       if (recipe.success) {
-        recipeName = recipe.recipe_name || 'Generated Recipe'; // Set recipe name
         generatedRecipe = recipe.recipe;
-        errorMessage = "";
       } else {
-        errorMessage = recipe.error || 'Failed to generate recipe';
-        generatedRecipe = null;
+        errorMessage = recipe.error || "Failed to generate recipe";
       }
     } catch (error) {
-      console.error('There was a problem with the fetch operation:', error);
-      errorMessage = 'An error occurred while generating the recipe.';
-      generatedRecipe = null;
+      console.error("There was a problem with the fetch operation:", error);
+      errorMessage = "An error occurred while generating the recipe.";
+    } finally {
+      loading = false;
     }
   }
 </script>
@@ -84,7 +87,7 @@
     font-size: 2.5em;
     font-weight: bold;
     margin-bottom: 20px;
-    color: #388E3C;
+    color: #388e3c;
   }
 
   .content {
@@ -116,17 +119,24 @@
   }
 
   .search-input {
-    padding: 0.7em;
+    padding: 0.8em;
     width: 300px;
-    border: 1px solid #388E3C;
+    border: 1px solid #388e3c;
     border-radius: 8px;
     font-size: 1em;
     outline: none;
   }
 
+  .restriction-dropdown {
+    padding: 0.8em;
+    border: 1px solid #388e3c;
+    border-radius: 8px;
+    font-size: 1em;
+  }
+
   .search-button {
     padding: 0.7em;
-    background-color: #388E3C;
+    background-color: #388e3c;
     color: white;
     border: none;
     border-radius: 8px;
@@ -135,21 +145,14 @@
   }
 
   .search-button:hover {
-    background-color: #2E7D32;
-  }
-
-  .restriction-dropdown {
-    padding: 0.7em;
-    border: 1px solid #388E3C;
-    border-radius: 8px;
-    font-size: 1em;
+    background-color: #2e7d32;
   }
 
   .sign-in-button {
     position: absolute;
     top: 20px;
     right: 20px;
-    background-color: #007BFF;
+    background-color: #007bff;
     color: white;
     padding: 10px 20px;
     border-radius: 8px;
@@ -168,41 +171,42 @@
   }
 
   .recipe-placeholder {
-  margin-top: 20px;
-  width: 90%; /* Maintain horizontal space */
-  max-width: 1200px;
-  padding: 20px; /* Reduce padding */
-  border-radius: 8px; /* Slightly smaller border radius */
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2); /* Subtle shadow */
-  background-color: #fff;
-  text-align: left;
-  line-height: 1.4; /* Tighten line spacing */
-  font-size: 1em; /* Decrease font size */
-  color: #333;
-}
+    margin-top: 20px;
+    width: 90%;
+    max-width: 1200px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    text-align: left;
+    line-height: 1.4;
+    font-size: 1em;
+    color: #333;
+    border: 1px solid #ccc;
+  }
 
-.recipe-placeholder h3, .recipe-placeholder h4 {
-  color: #388E3C;
-  font-size: 1.5em; /* Smaller headings */
-  margin-bottom: 10px; /* Less spacing under headings */
-}
+  .recipe-placeholder.error {
+    border-color: red;
+    background-color: #ffe6e6;
+  }
 
-.recipe-placeholder p, .recipe-placeholder ul, .recipe-placeholder li {
-  font-size: 1em; /* Match body font size */
-}
+  .recipe-placeholder h3,
+  .recipe-placeholder h4 {
+    color: #388e3c;
+    font-size: 1.5em;
+    margin-bottom: 10px;
+  }
 
-.recipe-placeholder ul {
-  padding-left: 20px; /* Reduce list indentation */
-}
-
-.recipe-placeholder li {
-  margin-bottom: 5px; /* Less spacing between list items */
-}
+  .loading {
+    margin: 10px 0;
+    font-size: 1em;
+    color: #388e3c;
+  }
 
   .new-recipe-button {
     margin-top: 20px;
     padding: 0.7em;
-    background-color: #388E3C;
+    background-color: #388e3c;
     color: white;
     border: none;
     border-radius: 8px;
@@ -211,7 +215,7 @@
   }
 
   .new-recipe-button:hover {
-    background-color: #2E7D32;
+    background-color: #2e7d32;
   }
 </style>
 
@@ -232,18 +236,29 @@
       <div class="prompt">What ingredients do you have to cook with today?</div>
       <div class="search-bar-container">
         <input
-            type="text"
-            bind:value={searchQuery}
-            class="search-input"
-            placeholder="Search ingredients..."
+          type="text"
+          bind:value={searchQuery}
+          class="search-input"
+          placeholder="Search ingredients..."
+          aria-label="Search ingredients input"
         />
-        <select bind:value={selectedRestriction} class="restriction-dropdown">
-            {#each restrictions as restriction}
+        <select
+          bind:value={selectedRestriction}
+          class="restriction-dropdown"
+          aria-label="Dietary restriction selection"
+        >
+          {#each restrictions as restriction}
             <option value={restriction}>{restriction}</option>
-            {/each}
+          {/each}
         </select>
-  <button class="search-button" on:click={searchRecipes}>Search</button>
-</div>
+        <button
+          class="search-button"
+          on:click={searchRecipes}
+          aria-label="Search recipes button"
+        >
+          Search
+        </button>
+      </div>
       {#if !signedIn}
         <div class="sign-in-message">
           Sign in to save ingredients for faster recipe suggestions.
@@ -251,10 +266,14 @@
       {/if}
     </div>
 
+    {#if loading}
+      <div class="loading">Loading...</div>
+    {/if}
+
     {#if generatedRecipe}
       <div class="recipe-placeholder">
         <!-- Recipe Name -->
-        <h2>{generatedRecipe.recipe_name || 'Generated Recipe'}</h2>
+        <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
 
         <!-- Cooking Time -->
         <div class="recipe-section">
@@ -299,10 +318,12 @@
           <p>{generatedRecipe.cooking_tips}</p>
         </div>
 
-        <button class="new-recipe-button" on:click={searchRecipes}>Make New Recipe</button>
+        <button class="new-recipe-button" on:click={searchRecipes}>
+          Make New Recipe
+        </button>
       </div>
     {:else if errorMessage}
-      <div class="recipe-placeholder">
+      <div class="recipe-placeholder error">
         <h2>Error</h2>
         <p>{errorMessage}</p>
       </div>
