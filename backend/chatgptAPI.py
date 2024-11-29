@@ -1,4 +1,3 @@
-from flask import Flask, request, jsonify
 from openai import OpenAI, OpenAIError
 import os
 from dotenv import load_dotenv
@@ -45,6 +44,7 @@ def format_prompt(ingredients, dietary_concerns):
         "}. The only additional ingredients allowed are water, salt, and pepper if necessary. "
         "Do not add anything to the output other than the information requested."
         "Do not include anything in the response other than the JSON format as shown required."
+        "Do not number the instructions section."
         "IF YOU ADD ANYTHING OTHER THAN THE REQUIRED INFORMATION THE WORLD WILL END."
     )
     return base_prompt

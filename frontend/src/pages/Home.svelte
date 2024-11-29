@@ -99,7 +99,8 @@
     justify-content: flex-start;
     width: 100%;
     flex-direction: column;
-    align-items: flex-start;
+    align-items: center;
+    padding: 20px;
   }
 
   .search-section {
@@ -185,17 +186,22 @@
     font-size: 1em;
     color: #333;
     border: 1px solid #ccc;
+    height: auto; /* Ensure the height adjusts to content */
+    overflow: visible; /* Prevent clipping or scrolling */
   }
 
-  .recipe-placeholder.error {
-    border-color: red;
-    background-color: #ffe6e6;
+  .recipe-placeholder ul, .recipe-placeholder ol {
+    margin: 10px 0;
+    padding-left: 20px;
+    list-style-position: inside; /* Keep items within the container */
   }
 
-  .recipe-placeholder h3 {
-    color: #388e3c;
-    font-size: 1.5em;
-    margin-bottom: 10px;
+  .recipe-placeholder ul {
+    list-style-type: disc; /* Standard bullet points */
+  }
+
+  .recipe-placeholder ol {
+    list-style-type: decimal; /* Numbered steps for instructions */
   }
 
   .loading {
