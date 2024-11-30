@@ -72,6 +72,49 @@
       loading = false;
     }
   }
+  // Expecting a list of ingredients
+  async function generateRecipeFromFridge(ingredientsList) {
+    if (!Array.isArray(ingredientsList) || ingredientsList.length === 0) {
+        errorMessage = "Please select ingredients from your fridge";
+        return;
+    }
+
+    const data = {
+        fridge_ingredients: ingredientsList,
+        dietary_concerns: selectedRestriction || "None",
+    };
+    console.log("Sending fridge ingredients to backend:", JSON.stringify(data));
+
+    loading = true;
+    errorMessage = "";
+    generatedRecipe = null;
+
+    try {
+        const response = await fetch(`${BACKEND_URL}/api/generate-recipe-from-fridge`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(data),
+        });
+
+        if (!response.ok) {
+            throw new Error("Network response was not ok");
+        }
+
+        const recipe = await response.json();
+        if (recipe.success) {
+            generatedRecipe = recipe.recipe;
+        } else {
+            errorMessage = recipe.error || "Failed to generate recipe from fridge ingredients";
+        }
+    } catch (error) {
+        console.error("There was a problem with the fetch operation:", error);
+        errorMessage = "An error occurred while generating the recipe.";
+    } finally {
+        loading = false;
+    }
+  }
 </script>
 
 <style>
