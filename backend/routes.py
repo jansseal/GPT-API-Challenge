@@ -104,6 +104,25 @@ def login():
         db.session.close()
 
 
+# User logout
+@main.route('/logout', methods=['POST'])
+def logout():
+    try:
+        if 'user_id' in session:
+            # Remove user_id from and clear the entire session
+            user_id = session.pop('user_id', None)
+            session.clear()  # Clear the entire session
+            logging.info(f'User with ID {user_id} logged out successfully.')
+            return jsonify({'message': 'Logout successful'}), 200
+        else:
+            logging.warning('Logout attempt without an active session.')
+            return jsonify({'message': 'No active session found'}), 400
+
+    except Exception as e:
+        logging.error(f'Error on logout route: {str(e)}.')
+        return jsonify({'message': 'Internal server error'}), 500
+
+
 # Add a new user
 @main.route('/users', methods=['POST'])
 def add_user():
