@@ -90,7 +90,7 @@ def login():
                 'user_name': user.user_name}), 200
 
         logging.warning(
-            f'Invalid login attempt for email: "{data['user_email']}".'
+            f'Invalid login attempt for email: "{data["user_email"]}".'
         )
         return jsonify({'message': 'Invalid email or password'}), 401
 
