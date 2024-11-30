@@ -36,8 +36,8 @@ def test_add_duplicate_email(test_client, init_db):
         'user_password': 'P@ssValiD1'
     })
 
-    assert response_one.status_code == 500  # Failure
-    assert response_one.get_json()['message'] == 'Internal server error' #'User email must be unique'
+    assert response_one.status_code == 400  # Failure
+    assert response_one.get_json()['message'] == 'User email must be unique'
 
 
 def test_add_user_invalid_data(test_client):
