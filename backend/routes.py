@@ -128,13 +128,6 @@ def logout():
 def add_user():
     data = request.get_json()
     try:
-        # Check for duplicate email
-        existing_user = User.query.filter_by(
-            user_email=data['user_email']).first()
-        if existing_user:
-            logging.warning(f'Duplicate email attempted: {data["user_email"]}')
-            return jsonify({'message': 'User email must be unique'}), 400
-
         new_user = User(
             user_name=data['user_name'],
             user_email=data['user_email'],
@@ -147,6 +140,11 @@ def add_user():
             'id': new_user.user_id,
             'user_name': new_user.user_name,
             'user_email': new_user.user_email}), 201
+
+    except IntegrityError:
+        db.session.rollback()
+        logging.warning(f'Duplicate email attempted: {data['user_email']}')
+        return jsonify({'message': 'User email must be unique'}), 400
 
     except Exception as e:
         db.session.rollback()
