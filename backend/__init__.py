@@ -10,6 +10,7 @@ from datetime import timedelta
 db = SQLAlchemy()
 migrate = Migrate()
 
+
 load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
 
