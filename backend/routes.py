@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from .chatgptAPI import generate_recipe
 import logging
 from werkzeug.security import check_password_hash
@@ -84,6 +84,7 @@ def login():
             user.user_password,
             data['user_password']
         ):
+            session['user_id'] = user.user_id
             logging.info(f'User "{user.user_email}" logged in successfully.')
             return jsonify({
                 'id': user.user_id,
