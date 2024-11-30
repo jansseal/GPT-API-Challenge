@@ -399,3 +399,27 @@ def test_get_empty_ingredients(test_client,init_db):
     data = response.get_json()
     assert len(data) == 0 # User has 0 ingredients
 
+def test_get_user_recipes(test_client, init_db):
+    # Retrieves all the recipes associated to a user
+    user = User(user_name="BeaverOSU", user_email="gobeavs@osu.com", user_password="Cr@zy1Pa$w0Rdz1")
+    init_db.session.add(user)
+    init_db.session.commit()
+
+    # Add recipes
+    recipes = [Recipe(recipe_name="Spaghetti Carbonara", recipe_cooktime=30, recipe_instructions="Boil pasta. Cook bacon. Mix with egg and cheese.", user_id=user.user_id),
+               Recipe(recipe_name="Goat Curry", recipe_cooktime=45, recipe_instructions="Cook goat with spices. Add coconut milk to water, mix.", user_id=user.user_id),
+               Recipe(recipe_name="Grilled Cheese Sandwich", recipe_cooktime=10, recipe_instructions="Butter bread. Grill with cheese", user_id=user.user_id)]
+    
+    init_db.session.add_all(recipes)
+    init_db.session.commit()
+
+    response = test_client.get(f"/recipes/{user.user_id}")
+    assert response.status_code == 200 # Success
+    response_data = response.get_json()
+    assert len(response_data) == 3 # Ensure 3 ingredients retrieved
+
+    # verify content
+    recipe_names = {recipe["name"] for recipe in response_data}
+    assert "Grilled Cheese Sandwich" in recipe_names
+    assert "Spaghetti Carbonara" in recipe_names
+    assert "Goat Curry" in recipe_names
