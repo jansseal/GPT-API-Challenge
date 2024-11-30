@@ -12,6 +12,12 @@
     { name: 'Apple', icon: 'fa-apple', selected: false },
   ];
 
+  const BACKEND_URL = "http://127.0.0.1:5000";
+  let selectedIngredients = [];
+  let generatedRecipe = null;
+  let errorMessage = "";
+  let loading = false;
+
   function deleteItem(index) {
     items = items.filter((_, i) => i !== index);
   }
@@ -19,7 +25,13 @@
   function toggleSelect(index) {
     items = items.map((item, i) => {
       if (i === index) {
-        return { ...item, selected: !item.selected };
+        const newItem = { ...item, selected: !item.selected };
+        if (newItem.selected) {
+          selectedIngredients = [...selectedIngredients, newItem.name];
+        } else {
+          selectedIngredients = selectedIngredients.filter(name => name !== newItem.name);
+        }
+        return newItem;
       }
       return item;
     });
@@ -33,6 +45,46 @@
   }
 
   let newItem = '';
+
+  async function handleGenerateRecipe() {
+    if (selectedIngredients.length === 0) {
+      errorMessage = "Please select ingredients first";
+      return;
+    }
+
+    loading = true;
+    errorMessage = "";
+    generatedRecipe = null;
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/generate-recipe-from-fridge`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          fridge_ingredients: selectedIngredients,
+          dietary_concerns: "None"
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Network response was not ok");
+      }
+
+      const recipe = await response.json();
+      if (recipe.success) {
+        generatedRecipe = recipe.recipe;
+      } else {
+        errorMessage = recipe.error || "Failed to generate recipe";
+      }
+    } catch (error) {
+      console.error("There was a problem with the fetch operation:", error);
+      errorMessage = "An error occurred while generating the recipe.";
+    } finally {
+      loading = false;
+    }
+  }
 </script>
 
 <style>
@@ -176,6 +228,62 @@
       grid-template-columns: repeat(1, 1fr); /* 1 column on small screens */
     }
   }
+
+  .recipe-placeholder {
+    margin-top: 20px;
+    width: 90%;
+    max-width: 1200px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    text-align: left;
+    line-height: 1.4;
+    font-size: 1em;
+    color: #333;
+    border: 1px solid #ccc;
+  }
+
+  .recipe-section {
+    margin: 20px 0;
+  }
+
+  .new-recipe-button {
+    margin-top: 20px;
+    padding: 0.7em;
+    background-color: #388e3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  .new-recipe-button:hover {
+    background-color: #2e7d32;
+  }
+
+  .generate-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+
+  .generate-button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .loading {
+    margin-top: 20px;
+    color: #666;
+    font-style: italic;
+  }
 </style>
 
 <div class="container">
@@ -198,4 +306,67 @@
       </div>
     {/each}
   </div>
+  <button 
+    class="generate-button"
+    on:click={handleGenerateRecipe}
+    disabled={selectedIngredients.length === 0}>
+    Generate Recipe ({selectedIngredients.length} items selected)
+  </button>
+  {#if loading}
+    <div class="loading">Generating recipe...</div>
+  {/if}
+  {#if generatedRecipe}
+    <div class="recipe-placeholder">
+      <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
+
+      <div class="recipe-section">
+        <h3>Cooking Time</h3>
+        <p>{generatedRecipe.cooking_time} minutes</p>
+      </div>
+
+      <div class="recipe-section">
+        <h3>Ingredients</h3>
+        <ul>
+          {#each generatedRecipe.ingredients as ingredient}
+            <li>{ingredient.quantity} {ingredient.unit} {ingredient.ingredient}</li>
+          {/each}
+        </ul>
+      </div>
+
+      <div class="recipe-section">
+        <h3>Instructions</h3>
+        <ol>
+          {#each generatedRecipe.instructions as step}
+            <li>{step}</li>
+          {/each}
+        </ol>
+      </div>
+
+      <div class="recipe-section">
+        <h3>Nutritional Information</h3>
+        <ul>
+          <li>Calories: {generatedRecipe.nutritional_info.calories}</li>
+          <li>Protein: {generatedRecipe.nutritional_info.protein}</li>
+          <li>Fat: {generatedRecipe.nutritional_info.fat}</li>
+          <li>Carbohydrates: {generatedRecipe.nutritional_info.carbohydrates}</li>
+        </ul>
+      </div>
+
+      <div class="recipe-section">
+        <h3>Cooking Tips</h3>
+        <p>{generatedRecipe.cooking_tips}</p>
+      </div>
+
+      <button class="new-recipe-button" on:click={() => {
+        generatedRecipe = null;
+      }}>
+        Make New Recipe
+      </button>
+    </div>
+  {:else if errorMessage}
+    <div class="recipe-placeholder error">
+      <h2>Error</h2>
+      <p>{errorMessage}</p>
+    </div>
+  {/if}
 </div>
