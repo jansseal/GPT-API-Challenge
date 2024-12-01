@@ -14,14 +14,14 @@ class User(db.Model):
     # Relationships with Ingredient and Recipe
     ingredients = db.relationship(
         'Ingredient',
-        backref='user',
+        backref='users',
         lazy=True,
         cascade='all, delete-orphan'
     )
 
     recipes = db.relationship(
         'Recipe',
-        backref='user',
+        backref='users',
         lazy=True,
         cascade='all, delete-orphan'
     )
