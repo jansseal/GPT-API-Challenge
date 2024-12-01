@@ -34,6 +34,8 @@
       dietary_concerns: selectedRestriction || "None",
     };
 
+    console.log("Sending to backend:", JSON.stringify(data));
+
     loading = true;
     errorMessage = "";
     generatedRecipe = null;
@@ -58,6 +60,7 @@
         errorMessage = recipe.error || "Failed to generate recipe";
       }
     } catch (error) {
+      console.error("There was a problem with the fetch operation:", error);
       errorMessage = "An error occurred while generating the recipe.";
     } finally {
       loading = false;
@@ -255,7 +258,55 @@
 
     {#if generatedRecipe}
       <div class="recipe-placeholder">
-        <!-- Recipe content remains unchanged -->
+         <!-- Recipe Name -->
+        <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
+
+        <!-- Cooking Time -->
+        <div class="recipe-section">
+          <h3>Cooking Time</h3>
+          <p>{generatedRecipe.cooking_time} minutes</p>
+        </div>
+
+        <!-- Ingredients -->
+        <div class="recipe-section">
+          <h3>Ingredients</h3>
+          <ul>
+            {#each generatedRecipe.ingredients as ingredient}
+              <li>{ingredient.quantity} {ingredient.unit} {ingredient.ingredient}</li>
+            {/each}
+          </ul>
+        </div>
+
+        <!-- Instructions -->
+        <div class="recipe-section">
+          <h3>Instructions</h3>
+          <ol>
+            {#each generatedRecipe.instructions as step}
+              <li>{step}</li>
+            {/each}
+          </ol>
+        </div>
+
+        <!-- Nutritional Information -->
+        <div class="recipe-section">
+          <h3>Nutritional Information</h3>
+          <ul>
+            <li>Calories: {generatedRecipe.nutritional_info.calories}</li>
+            <li>Protein: {generatedRecipe.nutritional_info.protein}</li>
+            <li>Fat: {generatedRecipe.nutritional_info.fat}</li>
+            <li>Carbohydrates: {generatedRecipe.nutritional_info.carbohydrates}</li>
+          </ul>
+        </div>
+
+        <!-- Cooking Tips -->
+        <div class="recipe-section">
+          <h3>Cooking Tips</h3>
+          <p>{generatedRecipe.cooking_tips}</p>
+        </div>
+
+        <button class="new-recipe-button" on:click={searchRecipes}>
+          Make New Recipe
+        </button>
       </div>
     {:else if errorMessage}
       <div class="recipe-placeholder error">
