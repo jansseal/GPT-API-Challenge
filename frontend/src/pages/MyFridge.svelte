@@ -1,54 +1,135 @@
 <script>
   import { navigate } from "svelte-routing";
-  import { onMount } from 'svelte';
-  let items = [
-
-    { name: 'Avocado', icon: 'fa-avocado', selected: false },
-    { name: 'Bottle', icon: 'fa-bottle', selected: false },
-    { name: 'Chicken', icon: 'fa-chicken', selected: false },
-    { name: 'Corn', icon: 'fa-corn', selected: false },
-    { name: 'Cherry', icon: 'fa-cherry', selected: false },
-    { name: 'Orange', icon: 'fa-orange', selected: false },
-    { name: 'Apple', icon: 'fa-apple', selected: false },
-  ];
+  import { onMount } from "svelte";
+  import { user } from "../stores/user";
 
   const BACKEND_URL = process.env.VITE_API_URL;
   let selectedIngredients = [];
   let generatedRecipe = null;
   let errorMessage = "";
   let loading = false;
+  let newItem = "";
 
-  function deleteItem(index) {
-    items = items.filter((_, i) => i !== index);
+  // Fetch ingredients for the user's profile
+  async function fetchIngredients() {
+    if (!$user) return; // Skip fetching if the user is not signed in
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/ingredients`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to load ingredients.");
+      }
+
+      items = await response.json();
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+      errorMessage = "Unable to load your fridge items. Please try again.";
+    }
   }
 
+  // Add a new ingredient to the fridge
+  async function addItem() {
+    if (!$user) {
+      alert("Please sign in to use this feature.");
+      return;
+    }
+
+    if (newItem.trim() === "") {
+      errorMessage = "Ingredient name cannot be empty.";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/ingredients`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ ingredient_name: newItem }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to add ingredient.");
+      }
+
+      const addedIngredient = await response.json();
+      items = [...items, addedIngredient];
+      newItem = "";
+      errorMessage = "";
+    } catch (error) {
+      console.error("Error adding ingredient:", error);
+      errorMessage = "Failed to add the ingredient. Please try again.";
+    }
+  }
+
+  // Delete an ingredient from the fridge
+  async function deleteItem(ingredientId) {
+    if (!$user) {
+      alert("Please sign in to use this feature.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/ingredients/${ingredientId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to delete ingredient.");
+      }
+
+      items = items.filter((item) => item.id !== ingredientId);
+      errorMessage = "";
+    } catch (error) {
+      console.error("Error deleting ingredient:", error);
+      errorMessage = "Failed to delete the ingredient. Please try again.";
+    }
+  }
+
+  // Toggle ingredient selection
   function toggleSelect(index) {
+    if (!$user) {
+      alert("Please sign in to use this feature.");
+      return;
+    }
+
     items = items.map((item, i) => {
       if (i === index) {
-        const newItem = { ...item, selected: !item.selected };
-        if (newItem.selected) {
-          selectedIngredients = [...selectedIngredients, newItem.name];
+        const updatedItem = { ...item, selected: !item.selected };
+        if (updatedItem.selected) {
+          selectedIngredients = [...selectedIngredients, updatedItem.name];
         } else {
-          selectedIngredients = selectedIngredients.filter(name => name !== newItem.name);
+          selectedIngredients = selectedIngredients.filter(
+            (name) => name !== updatedItem.name
+          );
         }
-        return newItem;
+        return updatedItem;
       }
       return item;
     });
   }
 
-  function addItem() {
-    if (newItem.trim() !== '') {
-      items = [...items, { name: newItem, icon: 'fa-plus', selected: false }];
-      newItem = '';
-    }
-  }
-
-  let newItem = '';
-
+  // Generate recipe based on selected ingredients
   async function handleGenerateRecipe() {
+    if (!$user) {
+      alert("Please sign in to use this feature.");
+      return;
+    }
+
     if (selectedIngredients.length === 0) {
-      errorMessage = "Please select ingredients first";
+      errorMessage = "Please select ingredients first.";
       return;
     }
 
@@ -62,42 +143,82 @@
         headers: {
           "Content-Type": "application/json",
         },
+        credentials: "include",
         body: JSON.stringify({
           fridge_ingredients: selectedIngredients,
-          dietary_concerns: "None"
+          dietary_concerns: "None",
         }),
       });
 
       if (!response.ok) {
-        throw new Error("Network response was not ok");
+        throw new Error("Failed to generate recipe.");
       }
 
       const recipe = await response.json();
       if (recipe.success) {
         generatedRecipe = recipe.recipe;
       } else {
-        errorMessage = recipe.error || "Failed to generate recipe";
+        errorMessage = recipe.error || "Failed to generate recipe.";
       }
     } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
+      console.error("Error generating recipe:", error);
       errorMessage = "An error occurred while generating the recipe.";
     } finally {
       loading = false;
     }
   }
+
+  // Load ingredients when the component mounts
+  onMount(fetchIngredients);
 </script>
 
 <style>
-
-  .container {
+  .sign-in-prompt {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    background-color: #fff3cd; /* Light yellow background */
+    color: #856404; /* Dark yellow text */
     padding: 20px;
-    margin-left: 100px; /* Adjusted for sidebar */
-    background-color: #C8E6C9; /* Light green background */
+    margin: 50px auto;
+    border: 1px solid #ffeeba;
     border-radius: 10px;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
   }
+
+  .sign-in-prompt h2 {
+    font-size: 1.5em;
+    margin-bottom: 15px;
+  }
+
+  .sign-in-btn {
+    padding: 10px 20px;
+    font-size: 1em;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  }
+
+  .sign-in-btn:hover {
+    background-color: #0056b3;
+  }
+
+  .container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+  margin-left: 100px; /* Adjusted for sidebar */
+  background-color: #C8E6C9; /* Light green background */
+  border-radius: 10px;
+}
 
   .grid {
     display: grid;
@@ -285,88 +406,57 @@
     font-style: italic;
   }
 </style>
-
 <div class="container">
-  <h1>My Fridge</h1>
-  <div class="search-bar">
-    <input type="text" class="search-input" bind:value={newItem} placeholder="Add to your Fridge?" />
-    <button class="add-btn" on:click={addItem}>Add</button>
-  </div>
-  <div class="grid">
-    {#each items as item, index}
-      <div class="item {item.selected ? 'selected' : ''}">
-        <div class="item-icon"><i class="fa {item.icon}"></i></div>
-        <p>{item.name}</p>
-        <div class="buttons">
-          <button class="delete-btn" on:click={() => deleteItem(index)}>Delete</button>
-          <button class="select-btn" on:click={() => toggleSelect(index)}>
-            {item.selected ? 'Remove from List' : 'Add to List'}
-          </button>
+  {#if !$user}
+    <!-- Styled prompt to sign in -->
+    <div class="sign-in-prompt">
+      <h2>Please sign in to use the My Fridge feature.</h2>
+      <button class="sign-in-btn" on:click={() => navigate("/profile")}>Sign In</button>
+    </div>
+  {:else}
+    <h1>My Fridge</h1>
+    <div class="search-bar">
+      <input
+        type="text"
+        class="search-input"
+        bind:value={newItem}
+        placeholder="Add to your Fridge?"
+      />
+      <button class="add-btn" on:click={addItem}>Add</button>
+    </div>
+    <div class="grid">
+      {#each items as item, index}
+        <div class="item {item.selected ? 'selected' : ''}">
+          <p>{item.name}</p>
+          <div class="buttons">
+            <button class="delete-btn" on:click={() => deleteItem(item.id)}>Delete</button>
+            <button class="select-btn" on:click={() => toggleSelect(index)}>
+              {item.selected ? "Remove from List" : "Add to List"}
+            </button>
+          </div>
         </div>
-      </div>
-    {/each}
-  </div>
-  <button 
-    class="generate-button"
-    on:click={handleGenerateRecipe}
-    disabled={selectedIngredients.length === 0}>
-    Generate Recipe ({selectedIngredients.length} items selected)
-  </button>
-  {#if loading}
-    <div class="loading">Generating recipe...</div>
-  {/if}
-  {#if generatedRecipe}
-    <div class="recipe-placeholder">
-      <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
-
-      <div class="recipe-section">
-        <h3>Cooking Time</h3>
-        <p>{generatedRecipe.cooking_time} minutes</p>
-      </div>
-
-      <div class="recipe-section">
-        <h3>Ingredients</h3>
-        <ul>
-          {#each generatedRecipe.ingredients as ingredient}
-            <li>{ingredient.quantity} {ingredient.unit} {ingredient.ingredient}</li>
-          {/each}
-        </ul>
-      </div>
-
-      <div class="recipe-section">
-        <h3>Instructions</h3>
-        <ol>
-          {#each generatedRecipe.instructions as step}
-            <li>{step}</li>
-          {/each}
-        </ol>
-      </div>
-
-      <div class="recipe-section">
-        <h3>Nutritional Information</h3>
-        <ul>
-          <li>Calories: {generatedRecipe.nutritional_info.calories}</li>
-          <li>Protein: {generatedRecipe.nutritional_info.protein}</li>
-          <li>Fat: {generatedRecipe.nutritional_info.fat}</li>
-          <li>Carbohydrates: {generatedRecipe.nutritional_info.carbohydrates}</li>
-        </ul>
-      </div>
-
-      <div class="recipe-section">
-        <h3>Cooking Tips</h3>
-        <p>{generatedRecipe.cooking_tips}</p>
-      </div>
-
-      <button class="new-recipe-button" on:click={() => {
-        generatedRecipe = null;
-      }}>
-        Make New Recipe
-      </button>
+      {/each}
     </div>
-  {:else if errorMessage}
-    <div class="recipe-placeholder error">
-      <h2>Error</h2>
-      <p>{errorMessage}</p>
-    </div>
+    <button
+      class="generate-button"
+      on:click={handleGenerateRecipe}
+      disabled={selectedIngredients.length === 0}
+    >
+      Generate Recipe ({selectedIngredients.length} items selected)
+    </button>
+    {#if loading}
+      <div class="loading">Generating recipe...</div>
+    {/if}
+    {#if generatedRecipe}
+      <div class="recipe-placeholder">
+        <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
+        <!-- Recipe content here -->
+      </div>
+    {:else if errorMessage}
+      <div class="recipe-placeholder error">
+        <h2>Error</h2>
+        <p>{errorMessage}</p>
+      </div>
+    {/if}
   {/if}
 </div>
