@@ -12,8 +12,9 @@
 
   // Fetch ingredients for the user's profile
   async function fetchIngredients() {
-    if (!$user) return; // Skip fetching if the user is not signed in
-
+    if (!$user) {
+      return; // Skip loading ingredients if the user is not signed in
+    }
     try {
       const response = await fetch(`${BACKEND_URL}/ingredients`, {
         method: "GET",
@@ -36,11 +37,6 @@
 
   // Add a new ingredient to the fridge
   async function addItem() {
-    if (!$user) {
-      alert("Please sign in to use this feature.");
-      return;
-    }
-
     if (newItem.trim() === "") {
       errorMessage = "Ingredient name cannot be empty.";
       return;
@@ -61,7 +57,7 @@
       }
 
       const addedIngredient = await response.json();
-      items = [...items, addedIngredient];
+      items = [...items, addedIngredient]; // Update the list locally
       newItem = "";
       errorMessage = "";
     } catch (error) {
@@ -72,11 +68,6 @@
 
   // Delete an ingredient from the fridge
   async function deleteItem(ingredientId) {
-    if (!$user) {
-      alert("Please sign in to use this feature.");
-      return;
-    }
-
     try {
       const response = await fetch(`${BACKEND_URL}/ingredients/${ingredientId}`, {
         method: "DELETE",
@@ -90,7 +81,7 @@
         throw new Error("Failed to delete ingredient.");
       }
 
-      items = items.filter((item) => item.id !== ingredientId);
+      items = items.filter((item) => item.id !== ingredientId); // Remove locally
       errorMessage = "";
     } catch (error) {
       console.error("Error deleting ingredient:", error);
@@ -100,11 +91,6 @@
 
   // Toggle ingredient selection
   function toggleSelect(index) {
-    if (!$user) {
-      alert("Please sign in to use this feature.");
-      return;
-    }
-
     items = items.map((item, i) => {
       if (i === index) {
         const updatedItem = { ...item, selected: !item.selected };
@@ -123,11 +109,6 @@
 
   // Generate recipe based on selected ingredients
   async function handleGenerateRecipe() {
-    if (!$user) {
-      alert("Please sign in to use this feature.");
-      return;
-    }
-
     if (selectedIngredients.length === 0) {
       errorMessage = "Please select ingredients first.";
       return;
