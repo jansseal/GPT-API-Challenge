@@ -2,7 +2,7 @@
   import { navigate } from "svelte-routing";
   import { user } from "../stores/user";
 
-  const BACKEND_URL = "http://127.0.0.1:5000"; // Replace with your actual backend URL
+  const BACKEND_URL = "http://127.0.0.1:5000"; // Backend URL
 
   // Form data for Sign In
   let signInEmail = "";
@@ -17,10 +17,21 @@
   let signUpErrorMessage = "";
 
   // Form data for Edit Profile
-  let editName = "";
+  let editName = $user?.user_name || "";
+  let currentPassword = ""; // Field for the current password
   let editPassword = "";
   let editConfirmPassword = "";
   let editErrorMessage = "";
+
+  // Password Validation
+  let passwordValidations = {
+  length: false,
+  uppercase: false,
+  lowercase: false,
+  number: false,
+  special: false,
+    };
+
 
   // Handle Sign In
   async function handleSignIn() {
@@ -33,13 +44,14 @@
       const response = await fetch(`${BACKEND_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include session cookies
         body: JSON.stringify({ user_email: signInEmail, user_password: signInPassword }),
       });
 
       const data = await response.json();
       if (response.ok) {
         user.set(data); // Update the user store
-        sessionStorage.setItem("user", JSON.stringify(data)); // Save user to sessionStorage
+        sessionStorage.setItem("user", JSON.stringify(data)); // Save session
         signInErrorMessage = "";
         alert("Login successful!");
         navigate("/");
@@ -68,6 +80,7 @@
       const response = await fetch(`${BACKEND_URL}/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           user_name: signUpName,
           user_email: signUpEmail,
@@ -77,10 +90,8 @@
 
       const data = await response.json();
       if (response.ok) {
-        signUpErrorMessage = "";
         alert("Account created successfully! Please log in.");
-        signInEmail = signUpEmail;
-        signInPassword = signUpPassword;
+        signUpErrorMessage = "";
       } else {
         signUpErrorMessage = data.message || "Sign-up failed.";
       }
@@ -88,6 +99,17 @@
       console.error("Error during sign-up:", error);
       signUpErrorMessage = "An error occurred. Please try again.";
     }
+  }
+
+  // Validate password as user types
+  function validatePassword(password) {
+    passwordValidations = {
+      length: password.length >= 8,
+      uppercase: /[A-Z]/.test(password),
+      lowercase: /[a-z]/.test(password),
+      number: /[0-9]/.test(password),
+      special: /[!@#$%^&*(),.?":{}|<>]/.test(password),
+    };
   }
 
   // Handle Edit Profile
@@ -106,10 +128,11 @@
       const response = await fetch(`${BACKEND_URL}/users`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({
           user_name: editName,
           new_user_password: editPassword,
-          current_user_password: editPassword, // Assuming this is used for validation
+          current_user_password: currentPassword,
         }),
       });
 
@@ -117,7 +140,7 @@
       if (response.ok) {
         alert("Profile updated successfully!");
         editErrorMessage = "";
-        user.set({ ...$user, user_name: editName }); // Update user store
+        user.set({ ...$user, user_name: editName }); // Update user data locally
       } else {
         editErrorMessage = data.message || "Failed to update profile.";
       }
@@ -133,11 +156,14 @@
     if (!confirmDelete) return;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/users`, { method: "DELETE" });
+      const response = await fetch(`${BACKEND_URL}/users`, {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (response.ok) {
         alert("Profile deleted successfully!");
-        user.set(null); // Clear user store
+        user.set(null); // Clear user data locally
         sessionStorage.removeItem("user");
         navigate("/");
       } else {
@@ -208,17 +234,41 @@
     width: 2px;
     background-color: #C8E6C9;
   }
+
+   .password-requirements {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555; /* Subtle color */
+  }
+
+  .password-requirements ul {
+    margin: 0;
+    padding-left: 20px; /* Indent list items */
+  }
+
+  .password-requirements li {
+    margin: 5px 0; /* Add spacing between list items */
+  }
+
+  .password-requirements li.valid {
+    color: #388E3C; /* Green for valid */
+  }
+
+  .password-requirements li.invalid {
+    color: #FF5252; /* Red for invalid */
+  }
 </style>
 
 <div class="form-container">
   {#if $user}
-    <!-- Edit Profile Form -->
+    <!-- Edit Profile Section -->
     <div class="form-box">
       <h2>Edit Profile</h2>
       <form on:submit|preventDefault={handleEditProfile}>
         <input type="text" bind:value={editName} placeholder="New Name" required />
         <input type="password" bind:value={editPassword} placeholder="New Password" required />
-        <input type="password" bind:value={editConfirmPassword} placeholder="Confirm Password" required />
+        <input type="password" bind:value={editConfirmPassword} placeholder="Confirm New Password" required />
+        <input type="password" bind:value={currentPassword} placeholder="Current Password" required />
         <button type="submit">Update Profile</button>
         {#if editErrorMessage}
           <div class="error-message">{editErrorMessage}</div>
@@ -227,6 +277,7 @@
       <button on:click={handleDeleteProfile} style="background-color: #FF5252;">Delete Profile</button>
     </div>
   {:else}
+    <!-- Sign In Section -->
     <div class="form-box">
       <h2>Sign In</h2>
       <form on:submit|preventDefault={handleSignIn}>
@@ -239,17 +290,35 @@
       </form>
     </div>
 
-    <!-- Separator between forms -->
     <div class="separator"></div>
 
-    <!-- Sign Up Form -->
+    <!-- Sign Up Section -->
     <div class="form-box">
       <h2>Create Account</h2>
       <form on:submit|preventDefault={handleSignUp}>
         <input type="text" bind:value={signUpName} placeholder="Name" required />
         <input type="email" bind:value={signUpEmail} placeholder="Email" required />
-        <input type="password" bind:value={signUpPassword} placeholder="Password" required />
+        <input
+          type="password"
+          bind:value={signUpPassword}
+          placeholder="Password"
+          required
+          on:input={() => validatePassword(signUpPassword)}
+        />
         <input type="password" bind:value={confirmPassword} placeholder="Confirm Password" required />
+
+        <!-- Password requirements -->
+        <div class="password-requirements">
+          <p>Your password must meet the following requirements:</p>
+          <ul>
+            <li class="{passwordValidations.length ? 'valid' : 'invalid'}">At least 8 characters long</li>
+            <li class="{passwordValidations.uppercase ? 'valid' : 'invalid'}">Contains at least one uppercase letter</li>
+            <li class="{passwordValidations.lowercase ? 'valid' : 'invalid'}">Contains at least one lowercase letter</li>
+            <li class="{passwordValidations.number ? 'valid' : 'invalid'}">Contains at least one number</li>
+            <li class="{passwordValidations.special ? 'valid' : 'invalid'}">Contains at least one special character (e.g., !, @, #, $)</li>
+          </ul>
+        </div>
+
         <button type="submit">Create Account</button>
         {#if signUpErrorMessage}
           <div class="error-message">{signUpErrorMessage}</div>
