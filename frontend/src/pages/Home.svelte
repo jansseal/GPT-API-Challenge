@@ -28,6 +28,11 @@
   const BACKEND_URL = process.env.VITE_API_URL;
 
   async function searchRecipes() {
+    if (!signedIn) {
+      alert("Please log in to use this feature.");
+      navigate("/profile");
+      return;
+    }
 
     const data = {
       ingredients: searchQuery,
@@ -199,17 +204,14 @@
 
 
 <div class="page-container">
-  <!-- Sign-In Button -->
   {#if !signedIn}
     <button class="sign-in-button" on:click={() => navigate("/profile")}>
       Sign In
     </button>
   {/if}
 
-  <!-- Website Title -->
   <div class="title">Fridge-Raider</div>
 
-  <!-- Content Area -->
   <div class="content">
     <div class="search-section">
       <div class="prompt">What ingredients do you have to cook with today?</div>
@@ -255,7 +257,8 @@
 
     {#if generatedRecipe}
       <div class="recipe-placeholder">
-        <!-- Recipe content remains unchanged -->
+        <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
+        <!-- Recipe Details -->
       </div>
     {:else if errorMessage}
       <div class="recipe-placeholder error">
