@@ -1,41 +1,97 @@
 <script>
   import { navigate } from "svelte-routing";
+  import { user } from "../stores/user";
+
+  const BACKEND_URL = "http://127.0.0.1:5000"; // Replace with your actual backend URL
 
   // Form data for Sign In
   let signInEmail = "";
   let signInPassword = "";
+  let signInErrorMessage = ""; // New error message variable for sign-in
 
   // Form data for Sign Up
   let signUpName = "";
   let signUpEmail = "";
   let signUpPassword = "";
   let confirmPassword = "";
+  let signUpErrorMessage = ""; // New error message variable for sign-up
 
-  // Placeholder function for Sign In
-  function handleSignIn() {
-    // Simulating a successful login
-    if (signInEmail && signInPassword) {
-      console.log("Signing in with:", { signInEmail, signInPassword });
-      // Replace with actual sign-in logic
-      navigate("/profile");
-    } else {
-      alert("Please enter valid login credentials.");
+  // Handle Sign In
+  async function handleSignIn() {
+    if (!signInEmail || !signInPassword) {
+      signInErrorMessage = "Please enter valid login credentials.";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_email: signInEmail, user_password: signInPassword }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        user.set(data); // Update the user store
+        sessionStorage.setItem("user", JSON.stringify(data)); // Save user to sessionStorage
+        signInErrorMessage = ""; // Clear error message
+        alert("Login successful!");
+        navigate("/"); // Redirect to home page
+      } else {
+        signInErrorMessage = data.message || "Login failed."; // Display backend error
+      }
+    } catch (error) {
+      console.error("Error during login:", error);
+      signInErrorMessage = "An error occurred. Please try again.";
     }
   }
 
-  // Placeholder function for Sign Up
-  function handleSignUp() {
-    if (signUpPassword === confirmPassword) {
-      console.log("Creating account with:", { signUpName, signUpEmail, signUpPassword });
-      // Replace with actual sign-up logic
-      navigate("/profile");
-    } else {
-      alert("Passwords do not match!");
+  // Handle Sign Up
+  async function handleSignUp() {
+    if (!signUpName || !signUpEmail || !signUpPassword || !confirmPassword) {
+      signUpErrorMessage = "Please fill out all fields.";
+      return;
+    }
+
+    if (signUpPassword !== confirmPassword) {
+      signUpErrorMessage = "Passwords do not match!";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/users`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_name: signUpName,
+          user_email: signUpEmail,
+          user_password: signUpPassword,
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        signUpErrorMessage = ""; // Clear error message
+        alert("Account created successfully! Please log in.");
+        signInEmail = signUpEmail; // Optionally pre-fill login form
+        signInPassword = signUpPassword;
+      } else {
+        signUpErrorMessage = data.message || "Sign-up failed."; // Display backend error
+      }
+    } catch (error) {
+      console.error("Error during sign-up:", error);
+      signUpErrorMessage = "An error occurred. Please try again.";
     }
   }
 </script>
 
 <style>
+  .error-message {
+    color: red;
+    font-size: 0.9em;
+    margin-top: 10px;
+  }
+
   .form-container {
     display: flex;
     justify-content: center;
@@ -97,6 +153,9 @@
       <input type="email" bind:value={signInEmail} placeholder="Email" required />
       <input type="password" bind:value={signInPassword} placeholder="Password" required />
       <button type="submit">Sign In</button>
+      {#if signInErrorMessage}
+        <div class="error-message">{signInErrorMessage}</div>
+      {/if}
     </form>
   </div>
 
@@ -112,6 +171,9 @@
       <input type="password" bind:value={signUpPassword} placeholder="Password" required />
       <input type="password" bind:value={confirmPassword} placeholder="Confirm Password" required />
       <button type="submit">Create Account</button>
+      {#if signUpErrorMessage}
+        <div class="error-message">{signUpErrorMessage}</div>
+      {/if}
     </form>
   </div>
 </div>

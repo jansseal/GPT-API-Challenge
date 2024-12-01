@@ -42,32 +42,25 @@ export default {
 	plugins: [
 		svelte({
 			compilerOptions: {
-				// enable run-time checks when not in production
+				// Enable run-time checks when not in production
 				dev: !production
 			}
 		}),
-		// we'll extract any component CSS out into
-		// a separate file - better for performance
+		// Extract CSS into a separate file for better performance
 		css({ output: 'bundle.css' }),
 
-		// If you have external dependencies installed from
-		// npm, you'll most likely need these plugins. In
-		// some cases you'll need additional configuration -
-		// consult the documentation for details:
-		// https://github.com/rollup/plugins/tree/master/packages/commonjs
+		// Resolve Node modules and deduplicate Svelte imports
 		resolve({
 			browser: true,
-			dedupe: ['svelte'],
+			dedupe: ['svelte', 'svelte/transition', 'svelte/internal', 'svelte/store', 'svelte-routing'],
 			exportConditions: ['svelte']
 		}),
 		commonjs(),
 
-		// In dev mode, call `npm run start` once
-		// the bundle has been generated
+		// Serve during development
 		!production && serve(),
 
-		// Watch the `public` directory and refresh the
-		// browser on changes when not in production
+		// Enable live reloading in development
 		!production && livereload('public'),
 
 		// If we're building for production (npm run build

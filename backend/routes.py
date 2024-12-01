@@ -144,7 +144,7 @@ def add_user():
 
     except IntegrityError:
         db.session.rollback()
-        logging.warning(f'Duplicate email attempted: {data['user_email']}')
+        logging.warning(f'Duplicate email attempted: {data["user_email"]}')
         return jsonify({'message': 'User email must be unique'}), 400
 
     except Exception as e:
