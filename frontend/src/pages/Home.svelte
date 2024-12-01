@@ -104,8 +104,137 @@
 </script>
 
 <style>
-  /* Your existing styles remain unchanged */
+  .page-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    padding-bottom: 50px; /* Add extra space at the bottom */
+    position: relative;
+    min-height: 100vh; /* Ensures it covers at least the viewport height */
+    box-sizing: border-box; /* Includes padding in height calculations */
+  }
+  .title {
+    font-size: 2.5em;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #388e3c;
+  }
+  .content {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+  }
+  .search-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .prompt {
+    font-size: 1.5em;
+    font-weight: 500;
+    margin-bottom: 10px;
+  }
+  .search-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .search-input {
+    padding: 0.8em;
+    width: 300px;
+    border: 1px solid #388e3c;
+    border-radius: 8px;
+    font-size: 1em;
+    outline: none;
+  }
+  .restriction-dropdown {
+    padding: 0.8em;
+    border: 1px solid #388e3c;
+    border-radius: 8px;
+    font-size: 1em;
+  }
+  .search-button {
+    padding: 0.7em;
+    background-color: #388e3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  .search-button:hover {
+    background-color: #2e7d32;
+  }
+  .sign-in-button {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+  }
+  .sign-in-button:hover {
+    background-color: #0056b3;
+  }
+  .sign-in-message {
+    margin-top: 10px;
+    font-size: 0.9em;
+    color: #555;
+  }
+  .recipe-placeholder {
+    margin-top: 20px;
+    width: 90%;
+    max-width: 1200px;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+    background-color: #fff;
+    text-align: left;
+    line-height: 1.4;
+    font-size: 1em;
+    color: #333;
+    border: 1px solid #ccc;
+    height: auto; /* Ensure the height adjusts to content */
+    overflow: visible; /* Prevent clipping or scrolling */
+  }
+  .recipe-placeholder ul, .recipe-placeholder ol {
+    margin: 10px 0;
+    padding-left: 20px;
+    list-style-position: inside; /* Keep items within the container */
+  }
+  .recipe-placeholder ul {
+    list-style-type: disc; /* Standard bullet points */
+  }
+  .recipe-placeholder ol {
+    list-style-type: decimal; /* Numbered steps for instructions */
+  }
+  .loading {
+    margin: 10px 0;
+    font-size: 1em;
+    color: #388e3c;
+  }
+  .new-recipe-button {
+    margin-top: 20px;
+    padding: 0.7em;
+    background-color: #388e3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1em;
+  }
+  .new-recipe-button:hover {
+    background-color: #2e7d32;
+  }
 </style>
+
 
 <div class="page-container">
   <!-- Sign-In Button -->
