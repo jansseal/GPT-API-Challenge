@@ -56,7 +56,11 @@ def test_get_valid_user(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
-    response = test_client.get(f'/users/{user.user_id}')
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get('/users')
     assert response.status_code == 200
     data = response.get_json()
     assert data['user_name'] == user.user_name
@@ -68,18 +72,22 @@ def test_user_not_found(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
     # Delete user
-    response_one = test_client.delete(f'/users/{user.user_id}')
+    response_one = test_client.delete('/users')
     assert response_one.status_code == 200
     assert response_one.get_json()['message'] == 'User deleted successfully'
 
     # Attempt to delete user again
-    response_two = test_client.delete(f'/users/{user.user_id}')
+    response_two = test_client.delete('/users')
     assert response_two.status_code == 404
     assert response_two.get_json()['message'] == 'User not found'
 
     # Attempt to retriever non-existent user
-    response_three = test_client.get(f'/users/{user.user_id}')
+    response_three = test_client.get('/users')
     assert response_three.status_code == 404
     assert response_three.get_json()['message'] == 'User not found'
 
@@ -89,7 +97,11 @@ def test_delete_user(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
-    response = test_client.delete(f'/users/{user.user_id}')
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.delete('/users')
     assert response.status_code == 200
     assert response.get_json()['message'] == "User deleted successfully"
 
@@ -98,14 +110,18 @@ def test_delete_invalid_user(test_client, init_db):
     user = User(user_name='JohnDoe', user_email='johndoe@randomize.org', user_password='Crazy1$$lolzaaaaa')
     init_db.session.add(user)
     init_db.session.commit()
+
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
     
     # Delete user
-    response_one = test_client.delete(f'/users/{user.user_id}')
+    response_one = test_client.delete('/users')
     assert response_one.status_code == 200
     assert response_one.get_json()['message'] == 'User deleted successfully'
 
     # Attempt to remove user again
-    response_two = test_client.delete(f'/users/{user.user_id}')
+    response_two = test_client.delete('/users')
     assert response_two.status_code == 404
     assert response_two.get_json()['message'] == 'User not found'
 
@@ -114,6 +130,10 @@ def test_add_ingredient(test_client, init_db):
     user = User(user_name='FooBar', user_email='realFoo@bar.com', user_password='Re@L1ty$TriKez')
     init_db.session.add(user)
     init_db.session.commit()
+
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
 
     response = test_client.post('/ingredients', json={
         'ingredient_name': 'Spinach',
@@ -135,6 +155,10 @@ def test_add_duplicate_ingredient(test_client, init_db):
 
     assert response_one.status_code == 201
     user_id = response_one.get_json()['id'] # retrieve ID to associated ingredient to user
+
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user_id
 
     # Add ingredient
     response_two = test_client.post('/ingredients', json={
@@ -162,7 +186,11 @@ def test_retrieve_ingredient(test_client, init_db):
     init_db.session.add(ingredient)
     init_db.session.commit()
 
-    response = test_client.get(f'/ingredients/{user.user_id}')
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get('/ingredients')
     assert response.status_code == 200
     data = response.get_json()
     assert data[0]['name'] == 'Turkey'
@@ -207,6 +235,10 @@ def test_add_recipe(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
     response = test_client.post('/recipes', json={
         'recipe_name': 'Pasta',
         'recipe_cooktime': 20,
@@ -228,6 +260,10 @@ def test_add_duplicate_recipe(test_client, init_db):
 
     assert response_one.status_code == 201
     user_id = response_one.get_json()['id'] # Retrieve user ID
+
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user_id
 
     # Add first recipe
     response_two = test_client.post('/recipes', json={
@@ -266,7 +302,11 @@ def test_get_recipe(test_client, init_db):
     init_db.session.add(recipe)
     init_db.session.commit()
 
-    response = test_client.get(f'/recipes/{user.user_id}')
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get('/recipes/')
     assert response.status_code == 200
     data = response.get_json()
     assert data[0]['name'] == 'Chocolate Chip Cookies'
@@ -324,7 +364,11 @@ def test_update_user_success(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
-    response = test_client.put(f'/users/{user.user_id}', json={
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.put(f'/users', json={
         "current_user_password": "Gl@diat0r12!!",
         "user_name": "TimothyElNew",
         "new_user_password": "NEWGl@diat0r12!!"
@@ -342,7 +386,11 @@ def test_update_user_invalid_password(test_client, init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
-    response = test_client.put(f'/users/{user.user_id}', json={
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.put(f'/users', json={
         "current_user_password": "COuZyy123!@",
         "user_name": "CouzyBobEdit",
         "new_user_password": "IwantNewP@SSw0Rd12!"
@@ -361,8 +409,12 @@ def test_update_user_not_found(test_client, init_db):
     init_db.session.delete(user)
     init_db.session.commit()
 
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
     # Attempt to update user
-    response = test_client.put(f'/users/{user.user_id}', json={
+    response = test_client.put(f'/users', json={
         "current_user_password": "Gl@diat0r12!!",
         "user_name": "TimothElNew",
         "new_user_password": "NEWGl@diat0r12!!"
@@ -382,7 +434,11 @@ def test_get_ingredients_success(test_client,init_db):
     init_db.session.add(ingredient)
     init_db.session.commit()
 
-    response = test_client.get(f"/ingredients/{user.user_id}")
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get("/ingredients")
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 1 # User only has one ingredient
@@ -394,7 +450,11 @@ def test_get_empty_ingredients(test_client,init_db):
     init_db.session.add(user)
     init_db.session.commit()
 
-    response = test_client.get(f"/ingredients/{user.user_id}")
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get("/ingredients")
     assert response.status_code == 200
     data = response.get_json()
     assert len(data) == 0 # User has 0 ingredients
@@ -413,7 +473,11 @@ def test_get_user_recipes(test_client, init_db):
     init_db.session.add_all(recipes)
     init_db.session.commit()
 
-    response = test_client.get(f"/recipes/{user.user_id}")
+    # Simulate a session with the user's ID
+    with test_client.session_transaction() as session:
+        session['user_id'] = user.user_id
+
+    response = test_client.get(f"/recipes/")
     assert response.status_code == 200 # Success
     response_data = response.get_json()
     assert len(response_data) == 3 # Ensure 3 ingredients retrieved
