@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from .chatgptAPI import generate_recipe
 import logging
 from werkzeug.security import check_password_hash
@@ -84,13 +84,14 @@ def login():
             user.user_password,
             data['user_password']
         ):
+            session['user_id'] = user.user_id
             logging.info(f'User "{user.user_email}" logged in successfully.')
             return jsonify({
                 'id': user.user_id,
                 'user_name': user.user_name}), 200
 
         logging.warning(
-            f'Invalid login attempt for email: "{data['user_email']}".'
+            f'Invalid login attempt for email: "{data["user_email"]}".'
         )
         return jsonify({'message': 'Invalid email or password'}), 401
 
@@ -101,6 +102,25 @@ def login():
 
     finally:
         db.session.close()
+
+
+# User logout
+@main.route('/logout', methods=['POST'])
+def logout():
+    try:
+        if 'user_id' in session:
+            # Remove user_id from and clear the entire session
+            user_id = session.pop('user_id', None)
+            session.clear()
+            logging.info(f'User with ID {user_id} logged out successfully.')
+            return jsonify({'message': 'Logout successful'}), 200
+        else:
+            logging.warning('Logout attempt without an active session.')
+            return jsonify({'message': 'No active session found'}), 400
+
+    except Exception as e:
+        logging.error(f'Error on logout route: {str(e)}.')
+        return jsonify({'message': 'Internal server error'}), 500
 
 
 # Add a new user
@@ -118,7 +138,13 @@ def add_user():
         logging.info(f'User "{new_user.user_email}" created successfully.')
         return jsonify({
             'id': new_user.user_id,
-            'user_name': new_user.user_name}), 201
+            'user_name': new_user.user_name,
+            'user_email': new_user.user_email}), 201
+
+    except IntegrityError:
+        db.session.rollback()
+        logging.warning(f'Duplicate email attempted: {data['user_email']}')
+        return jsonify({'message': 'User email must be unique'}), 400
 
     except Exception as e:
         db.session.rollback()
@@ -130,9 +156,17 @@ def add_user():
 
 
 # Fetch user account information by ID
-@main.route('/users/<int:user_id>', methods=['GET'])
-def get_user(user_id):
+@main.route('/users', methods=['GET'])
+def get_user():
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to access user info without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         user = User.query.get(user_id)
         if user:
             logging.info(
@@ -155,9 +189,17 @@ def get_user(user_id):
 
 
 # Update a user by ID (with password verification)
-@main.route('/users/<int:user_id>', methods=['PUT'])
-def update_user(user_id):
+@main.route('/users', methods=['PUT'])
+def update_user():
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to update user info without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         user = User.query.get(user_id)
         if user:
             data = request.get_json()
@@ -202,9 +244,17 @@ def update_user(user_id):
 
 
 # Delete a user by ID
-@main.route('/users/<int:user_id>', methods=['DELETE'])
-def delete_user(user_id):
+@main.route('/users', methods=['DELETE'])
+def delete_user():
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to delete user without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         user = User.query.get(user_id)
         if user:
             db.session.delete(user)
@@ -230,9 +280,17 @@ def delete_user(user_id):
 def add_ingredient():
     data = request.get_json()
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to save ingredient without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         new_ingredient = Ingredient(
             ingredient_name=data['ingredient_name'],
-            user_id=data['user_id']
+            user_id=user_id
         )
         db.session.add(new_ingredient)
         db.session.commit()
@@ -264,9 +322,17 @@ def add_ingredient():
 
 
 # Fetch all ingredients tied to a user's account
-@main.route('/ingredients/<int:user_id>', methods=['GET'])
-def get_ingredients(user_id):
+@main.route('/ingredients', methods=['GET'])
+def get_ingredients():
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to get available ingredients without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         ingredients = Ingredient.query.filter_by(user_id=user_id).all()
         logging.info(
             f'All ingredients tied to user ID #{user_id} loaded successfully.'
@@ -316,11 +382,19 @@ def delete_ingredient(ingredient_id):
 def add_recipe():
     data = request.get_json()
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to save recipe without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         new_recipe = Recipe(
             recipe_name=data['recipe_name'],
             recipe_cooktime=data['recipe_cooktime'],
             recipe_instructions=data['recipe_instructions'],
-            user_id=data['user_id']
+            user_id=user_id
         )
         db.session.add(new_recipe)
         db.session.commit()
@@ -352,9 +426,17 @@ def add_recipe():
 
 
 # Fetch all recipes favorited by a user
-@main.route('/recipes/<int:user_id>', methods=['GET'])
-def get_recipes(user_id):
+@main.route('/recipes/', methods=['GET'])
+def get_recipes():
     try:
+        # Get user_id from session
+        user_id = session.get('user_id')
+        if not user_id:
+            logging.warning(
+                'Attempt to get saved recipes without an active session.'
+            )
+            return jsonify({'message': 'Unauthorized. Please log in.'}), 401
+
         recipes = Recipe.query.filter_by(user_id=user_id).all()
         logging.info(
             f'All recipes tied to user ID #{user_id} have loaded successfully.'
