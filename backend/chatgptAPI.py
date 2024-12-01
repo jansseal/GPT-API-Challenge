@@ -72,6 +72,15 @@ def generate_recipe(ingredients, dietary_concerns=None):
             temperature=0.5
         )
 
+        # Log token usage
+        prompt_tokens = response.usage.prompt_tokens
+        completion_tokens = response.usage.completion_tokens
+        total_tokens = response.usage.total_tokens
+        
+        logging.info(f"Token usage - Prompt: {prompt_tokens}, "
+                    f"Completion: {completion_tokens}, "
+                    f"Total: {total_tokens}")
+
         # Parse response JSON
         try:
             recipe = json.loads(response.choices[0].message.content)
