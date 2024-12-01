@@ -7,14 +7,20 @@
   // Form data for Sign In
   let signInEmail = "";
   let signInPassword = "";
-  let signInErrorMessage = ""; // New error message variable for sign-in
+  let signInErrorMessage = "";
 
   // Form data for Sign Up
   let signUpName = "";
   let signUpEmail = "";
   let signUpPassword = "";
   let confirmPassword = "";
-  let signUpErrorMessage = ""; // New error message variable for sign-up
+  let signUpErrorMessage = "";
+
+  // Form data for Edit Profile
+  let editName = "";
+  let editPassword = "";
+  let editConfirmPassword = "";
+  let editErrorMessage = "";
 
   // Handle Sign In
   async function handleSignIn() {
@@ -34,11 +40,11 @@
       if (response.ok) {
         user.set(data); // Update the user store
         sessionStorage.setItem("user", JSON.stringify(data)); // Save user to sessionStorage
-        signInErrorMessage = ""; // Clear error message
+        signInErrorMessage = "";
         alert("Login successful!");
-        navigate("/"); // Redirect to home page
+        navigate("/");
       } else {
-        signInErrorMessage = data.message || "Login failed."; // Display backend error
+        signInErrorMessage = data.message || "Login failed.";
       }
     } catch (error) {
       console.error("Error during login:", error);
@@ -71,16 +77,75 @@
 
       const data = await response.json();
       if (response.ok) {
-        signUpErrorMessage = ""; // Clear error message
+        signUpErrorMessage = "";
         alert("Account created successfully! Please log in.");
-        signInEmail = signUpEmail; // Optionally pre-fill login form
+        signInEmail = signUpEmail;
         signInPassword = signUpPassword;
       } else {
-        signUpErrorMessage = data.message || "Sign-up failed."; // Display backend error
+        signUpErrorMessage = data.message || "Sign-up failed.";
       }
     } catch (error) {
       console.error("Error during sign-up:", error);
       signUpErrorMessage = "An error occurred. Please try again.";
+    }
+  }
+
+  // Handle Edit Profile
+  async function handleEditProfile() {
+    if (!editName || !editPassword || !editConfirmPassword) {
+      editErrorMessage = "Please fill out all fields.";
+      return;
+    }
+
+    if (editPassword !== editConfirmPassword) {
+      editErrorMessage = "Passwords do not match!";
+      return;
+    }
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/users`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_name: editName,
+          new_user_password: editPassword,
+          current_user_password: editPassword, // Assuming this is used for validation
+        }),
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        alert("Profile updated successfully!");
+        editErrorMessage = "";
+        user.set({ ...$user, user_name: editName }); // Update user store
+      } else {
+        editErrorMessage = data.message || "Failed to update profile.";
+      }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      editErrorMessage = "An error occurred. Please try again.";
+    }
+  }
+
+  // Handle Delete Profile
+  async function handleDeleteProfile() {
+    const confirmDelete = confirm("Are you sure you want to delete your profile? This action is irreversible.");
+    if (!confirmDelete) return;
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/users`, { method: "DELETE" });
+
+      if (response.ok) {
+        alert("Profile deleted successfully!");
+        user.set(null); // Clear user store
+        sessionStorage.removeItem("user");
+        navigate("/");
+      } else {
+        alert("Failed to delete profile.");
+      }
+    } catch (error) {
+      console.error("Error deleting profile:", error);
+      alert("An error occurred. Please try again.");
     }
   }
 </script>
@@ -146,34 +211,50 @@
 </style>
 
 <div class="form-container">
-  <!-- Sign In Form -->
-  <div class="form-box">
-    <h2>Sign In</h2>
-    <form on:submit|preventDefault={handleSignIn}>
-      <input type="email" bind:value={signInEmail} placeholder="Email" required />
-      <input type="password" bind:value={signInPassword} placeholder="Password" required />
-      <button type="submit">Sign In</button>
-      {#if signInErrorMessage}
-        <div class="error-message">{signInErrorMessage}</div>
-      {/if}
-    </form>
-  </div>
+  {#if $user}
+    <!-- Edit Profile Form -->
+    <div class="form-box">
+      <h2>Edit Profile</h2>
+      <form on:submit|preventDefault={handleEditProfile}>
+        <input type="text" bind:value={editName} placeholder="New Name" required />
+        <input type="password" bind:value={editPassword} placeholder="New Password" required />
+        <input type="password" bind:value={editConfirmPassword} placeholder="Confirm Password" required />
+        <button type="submit">Update Profile</button>
+        {#if editErrorMessage}
+          <div class="error-message">{editErrorMessage}</div>
+        {/if}
+      </form>
+      <button on:click={handleDeleteProfile} style="background-color: #FF5252;">Delete Profile</button>
+    </div>
+  {:else}
+    <div class="form-box">
+      <h2>Sign In</h2>
+      <form on:submit|preventDefault={handleSignIn}>
+        <input type="email" bind:value={signInEmail} placeholder="Email" required />
+        <input type="password" bind:value={signInPassword} placeholder="Password" required />
+        <button type="submit">Sign In</button>
+        {#if signInErrorMessage}
+          <div class="error-message">{signInErrorMessage}</div>
+        {/if}
+      </form>
+    </div>
 
-  <!-- Separator between forms -->
-  <div class="separator"></div>
+    <!-- Separator between forms -->
+    <div class="separator"></div>
 
-  <!-- Sign Up Form -->
-  <div class="form-box">
-    <h2>Create Account</h2>
-    <form on:submit|preventDefault={handleSignUp}>
-      <input type="text" bind:value={signUpName} placeholder="Name" required />
-      <input type="email" bind:value={signUpEmail} placeholder="Email" required />
-      <input type="password" bind:value={signUpPassword} placeholder="Password" required />
-      <input type="password" bind:value={confirmPassword} placeholder="Confirm Password" required />
-      <button type="submit">Create Account</button>
-      {#if signUpErrorMessage}
-        <div class="error-message">{signUpErrorMessage}</div>
-      {/if}
-    </form>
-  </div>
+    <!-- Sign Up Form -->
+    <div class="form-box">
+      <h2>Create Account</h2>
+      <form on:submit|preventDefault={handleSignUp}>
+        <input type="text" bind:value={signUpName} placeholder="Name" required />
+        <input type="email" bind:value={signUpEmail} placeholder="Email" required />
+        <input type="password" bind:value={signUpPassword} placeholder="Password" required />
+        <input type="password" bind:value={confirmPassword} placeholder="Confirm Password" required />
+        <button type="submit">Create Account</button>
+        {#if signUpErrorMessage}
+          <div class="error-message">{signUpErrorMessage}</div>
+        {/if}
+      </form>
+    </div>
+  {/if}
 </div>
