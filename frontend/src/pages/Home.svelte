@@ -1,7 +1,8 @@
 <script>
   import { navigate } from "svelte-routing";
-  import { user } from "../App.svelte";
+  import { user } from "../stores/user"; // Import user store
 
+  // Check user login state
   $: signedIn = $user !== null;
 
   let searchQuery = "";
@@ -57,45 +58,6 @@
         errorMessage = recipe.error || "Failed to generate recipe";
       }
     } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
-      errorMessage = "An error occurred while generating the recipe.";
-    } finally {
-      loading = false;
-    }
-  }
-
-  async function generateRecipeFromFridge(ingredientsList) {
-
-    const data = {
-      fridge_ingredients: ingredientsList,
-      dietary_concerns: selectedRestriction || "None",
-    };
-
-    loading = true;
-    errorMessage = "";
-    generatedRecipe = null;
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/api/generate-recipe-from-fridge`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!response.ok) {
-        throw new Error("Network response was not ok");
-      }
-
-      const recipe = await response.json();
-      if (recipe.success) {
-        generatedRecipe = recipe.recipe;
-      } else {
-        errorMessage = recipe.error || "Failed to generate recipe from fridge ingredients";
-      }
-    } catch (error) {
-      console.error("There was a problem with the fetch operation:", error);
       errorMessage = "An error occurred while generating the recipe.";
     } finally {
       loading = false;
