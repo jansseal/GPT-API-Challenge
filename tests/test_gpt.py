@@ -133,7 +133,7 @@ def test_fridge_ingredient_number(test_client):
 
 
 def test_fridge_ingredient_list_number(test_client):
-    # Test response when fridge_ingredient data type is int
+    # Test response when fridge_ingredient data type is a list of int
     with patch('backend.chatgptAPI.generate_recipe', return_value=None) as mock_generate_recipe:
         response = test_client.post('/api/generate-recipe-from-fridge', json={
             "fridge_ingredients": [43261],
