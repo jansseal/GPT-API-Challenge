@@ -12,7 +12,7 @@
     { name: 'Apple', icon: 'fa-apple', selected: false },
   ];
 
-  const BACKEND_URL = "http://127.0.0.1:5000";
+  const BACKEND_URL = process.env.VITE_API_URL;
   let selectedIngredients = [];
   let generatedRecipe = null;
   let errorMessage = "";
