@@ -36,6 +36,7 @@
 
   // Handle search button click
   async function searchRecipes() {
+    const BACKEND_URL = 'https://gentle-fjord-52441-774e6189e8cb.herokuapp.com/'; 
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
