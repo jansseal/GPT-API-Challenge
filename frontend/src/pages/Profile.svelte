@@ -2,7 +2,7 @@
   import { navigate } from "svelte-routing";
   import { user } from "../stores/user";
 
-  const BACKEND_URL = "http://127.0.0.1:5000"; // Backend URL
+  const BACKEND_URL = process.env.VITE_API_URL; // Backend URL
 
   // Form data for Sign In
   let signInEmail = "";

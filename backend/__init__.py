@@ -11,7 +11,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 
 
-load_dotenv(dotenv_path="backend/.env")
+load_dotenv()
 secret_key = os.getenv("SECRET_KEY")
 
 if not secret_key:
