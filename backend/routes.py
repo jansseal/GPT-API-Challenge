@@ -9,8 +9,14 @@ from sqlalchemy.exc import IntegrityError
 main = Blueprint('main', __name__)
 
 
-@main.route('/')
-def home():
+# @main.route('/')
+# def home():
+#     return send_from_directory('static', 'index.html')
+
+
+@main.route('/', defaults={'path': ''})
+@main.route('/<path:path>')
+def catch_all(path):
     return send_from_directory('static', 'index.html')
 
 

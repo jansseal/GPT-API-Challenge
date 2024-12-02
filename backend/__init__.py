@@ -20,7 +20,7 @@ if not secret_key:
 
 
 def create_app():
-    app = Flask(__name__, static_folder='static/build', template_folder='static/build')
+    app = Flask(__name__, static_folder='static/build', template_folder='static')
     CORS(app)
 
     db_url = os.environ.get('DATABASE_URL', 'sqlite:///app.db')

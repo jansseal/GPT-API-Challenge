@@ -22,5 +22,6 @@
   "dependencies": {
     "sirv-cli": "^2.0.0",
     "svelte-routing": "^2.13.0"
-  }
+  },
+  "homepage": "/static"
 }
