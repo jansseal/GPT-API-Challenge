@@ -9,24 +9,33 @@
   let errorMessage = "";
   let loading = false;
   let newItem = "";
+  let dietaryPreference = "None";
 
-  // Fetch ingredients for the user's profile
+  const dietaryOptions = [
+    "None",
+    "Gluten Free",
+    "Low Calorie",
+    "Keto",
+    "Vegetarian",
+    "Vegan",
+    "Pescatarian",
+    "Dairy Free",
+    "Nut Free",
+    "Paleo",
+    "Low Carb"
+  ];
+
   async function fetchIngredients() {
-    if (!$user) {
-      return; // Skip loading ingredients if the user is not signed in
-    }
+    if (!$user) return;
+
     try {
       const response = await fetch(`${BACKEND_URL}/ingredients`, {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to load ingredients.");
-      }
+      if (!response.ok) throw new Error("Failed to load ingredients.");
 
       items = await response.json();
     } catch (error) {
@@ -35,7 +44,6 @@
     }
   }
 
-  // Add a new ingredient to the fridge
   async function addItem() {
     if (newItem.trim() === "") {
       errorMessage = "Ingredient name cannot be empty.";
@@ -45,19 +53,15 @@
     try {
       const response = await fetch(`${BACKEND_URL}/ingredients`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ ingredient_name: newItem }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to add ingredient.");
-      }
+      if (!response.ok) throw new Error("Failed to add ingredient.");
 
       const addedIngredient = await response.json();
-      items = [...items, addedIngredient]; // Update the list locally
+      items = [...items, addedIngredient];
       newItem = "";
       errorMessage = "";
     } catch (error) {
@@ -66,22 +70,17 @@
     }
   }
 
-  // Delete an ingredient from the fridge
   async function deleteItem(ingredientId) {
     try {
       const response = await fetch(`${BACKEND_URL}/ingredients/${ingredientId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to delete ingredient.");
-      }
+      if (!response.ok) throw new Error("Failed to delete ingredient.");
 
-      items = items.filter((item) => item.id !== ingredientId); // Remove locally
+      items = items.filter((item) => item.id !== ingredientId);
       errorMessage = "";
     } catch (error) {
       console.error("Error deleting ingredient:", error);
@@ -89,7 +88,6 @@
     }
   }
 
-  // Toggle ingredient selection
   function toggleSelect(index) {
     items = items.map((item, i) => {
       if (i === index) {
@@ -107,7 +105,6 @@
     });
   }
 
-  // Generate recipe based on selected ingredients
   async function handleGenerateRecipe() {
     if (selectedIngredients.length === 0) {
       errorMessage = "Please select ingredients first.";
@@ -121,19 +118,15 @@
     try {
       const response = await fetch(`${BACKEND_URL}/api/generate-recipe-from-fridge`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           fridge_ingredients: selectedIngredients,
-          dietary_concerns: "None",
+          dietary_concerns: dietaryPreference,
         }),
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to generate recipe.");
-      }
+      if (!response.ok) throw new Error("Failed to generate recipe.");
 
       const recipe = await response.json();
       if (recipe.success) {
@@ -149,7 +142,6 @@
     }
   }
 
-  // Load ingredients when the component mounts
   onMount(fetchIngredients);
 </script>
 
@@ -386,10 +378,30 @@
     color: #666;
     font-style: italic;
   }
+
+  .selected-ingredients {
+    margin-top: 20px;
+    font-size: 1.2em;
+    color: #388e3c;
+  }
+
+  .dietary-selection {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .dietary-dropdown {
+    padding: 0.5em;
+    border: 1px solid #388e3c;
+    border-radius: 8px;
+    font-size: 1em;
+  }
 </style>
+
 <div class="container">
   {#if !$user}
-    <!-- Styled prompt to sign in -->
     <div class="sign-in-prompt">
       <h2>Please sign in to use the My Fridge feature.</h2>
       <button class="sign-in-btn" on:click={() => navigate("/profile")}>Sign In</button>
@@ -418,6 +430,26 @@
         </div>
       {/each}
     </div>
+
+    <!-- Display selected ingredients -->
+    <div class="selected-ingredients">
+      Selected Ingredients: {selectedIngredients.join(", ") || "None"}
+    </div>
+
+    <!-- Dietary preference selection -->
+    <div class="dietary-selection">
+      <label for="dietary-dropdown">Dietary Preference:</label>
+      <select
+        id="dietary-dropdown"
+        class="dietary-dropdown"
+        bind:value={dietaryPreference}
+      >
+        {#each dietaryOptions as option}
+          <option value={option}>{option}</option>
+        {/each}
+      </select>
+    </div>
+
     <button
       class="generate-button"
       on:click={handleGenerateRecipe}
@@ -425,13 +457,48 @@
     >
       Generate Recipe ({selectedIngredients.length} items selected)
     </button>
+
     {#if loading}
       <div class="loading">Generating recipe...</div>
     {/if}
+
     {#if generatedRecipe}
       <div class="recipe-placeholder">
+        <!-- Display recipe in the same format as Home.svelte -->
         <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
-        <!-- Recipe content here -->
+        <div class="recipe-section">
+          <h3>Cooking Time</h3>
+          <p>{generatedRecipe.cooking_time} minutes</p>
+        </div>
+        <div class="recipe-section">
+          <h3>Ingredients</h3>
+          <ul>
+            {#each generatedRecipe.ingredients as ingredient}
+              <li>{ingredient.quantity} {ingredient.unit} {ingredient.ingredient}</li>
+            {/each}
+          </ul>
+        </div>
+        <div class="recipe-section">
+          <h3>Instructions</h3>
+          <ol>
+            {#each generatedRecipe.instructions as step}
+              <li>{step}</li>
+            {/each}
+          </ol>
+        </div>
+        <div class="recipe-section">
+          <h3>Nutritional Information</h3>
+          <ul>
+            <li>Calories: {generatedRecipe.nutritional_info.calories}</li>
+            <li>Protein: {generatedRecipe.nutritional_info.protein}</li>
+            <li>Fat: {generatedRecipe.nutritional_info.fat}</li>
+            <li>Carbohydrates: {generatedRecipe.nutritional_info.carbohydrates}</li>
+          </ul>
+        </div>
+        <div class="recipe-section">
+          <h3>Cooking Tips</h3>
+          <p>{generatedRecipe.cooking_tips}</p>
+        </div>
       </div>
     {:else if errorMessage}
       <div class="recipe-placeholder error">
