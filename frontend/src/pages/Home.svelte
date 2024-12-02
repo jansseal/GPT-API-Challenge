@@ -26,7 +26,7 @@
     "Low Carb"
   ];
 
-  const BACKEND_URL = "http://127.0.0.1:5000";
+  const BACKEND_URL = process.env.VITE_API_URL;
 
   // Handle sign-in button click
   function signIn() {
@@ -36,7 +36,6 @@
 
   // Handle search button click
   async function searchRecipes() {
-    const BACKEND_URL = 'https://gentle-fjord-52441-774e6189e8cb.herokuapp.com/'; 
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
