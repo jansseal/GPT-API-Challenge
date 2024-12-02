@@ -3,6 +3,7 @@ import os
 from dotenv import load_dotenv
 import logging
 import json
+import time
 
 # Configure logger
 logging.basicConfig(
@@ -41,61 +42,78 @@ def format_prompt(ingredients, dietary_concerns):
         '"instructions": ["Step 1", "Step 2", "Step 3"], '
         '"nutritional_info": {"calories": "value", "protein": "value", "fat": "value", "carbohydrates": "value"}, '
         '"cooking_tips": "Additional tips"'
-        "}. The only additional ingredients allowed are water, salt, and pepper if necessary. "
-        "Do not add anything to the output other than the information requested."
-        "Do not include anything in the response other than the JSON format as shown required."
-        "Do not number the instructions section."
-        "IF YOU ADD ANYTHING OTHER THAN THE REQUIRED INFORMATION THE WORLD WILL END."
+        "}. Only include the JSON object with no extra text. Adhere strictly to this format."
     )
     return base_prompt
 
 
-def generate_recipe(ingredients, dietary_concerns=None):
-    """Generate a recipe using OpenAI."""
+def validate_json(response_content):
+    """Validate if the response content is a properly formatted JSON."""
     try:
-        logging.info(f"Generating recipe for ingredients: {ingredients}")
-        prompt = format_prompt(ingredients, dietary_concerns)
+        parsed_json = json.loads(response_content)
+        # Ensure the JSON includes all required fields
+        required_fields = ["recipe_name", "cooking_time", "ingredients", "instructions", "nutritional_info",
+                           "cooking_tips"]
+        if all(field in parsed_json for field in required_fields):
+            return parsed_json
+        else:
+            logging.warning("Response JSON missing required fields")
+            return None
+    except json.JSONDecodeError:
+        logging.warning("Response is not a valid JSON")
+        return None
 
-        # Call OpenAI API
-        response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {
-                    "role": "system",
-                    "content": (
-                        "You are a professional chef. Provide recipes in a structured JSON format with the following: "
-                        "cooking time, ingredients, instructions, nutritional information (protein, fats, carbohydrates), and cooking tips."
-                    )
-                },
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.5
-        )
 
-        # Log token usage
-        prompt_tokens = response.usage.prompt_tokens
-        completion_tokens = response.usage.completion_tokens
-        total_tokens = response.usage.total_tokens
-        
-        logging.info(f"Token usage - Prompt: {prompt_tokens}, "
-                    f"Completion: {completion_tokens}, "
-                    f"Total: {total_tokens}")
-
-        # Parse response JSON
+def generate_recipe(ingredients, dietary_concerns=None, retries=3, delay=2):
+    """Generate a recipe using OpenAI with validation and retry logic."""
+    for attempt in range(retries):
         try:
-            recipe = json.loads(response.choices[0].message.content)
-            logging.info("Recipe successfully received from OpenAI")
-            return {"success": True, "recipe": recipe, "dietary_concerns": dietary_concerns or "None specified"}
-        except json.JSONDecodeError as e:
-            logging.error(f"Failed to parse recipe JSON: {e}")
-            return {"success": False, "error": "Invalid recipe format from OpenAI"}
+            logging.info(f"Generating recipe for ingredients: {ingredients}, Attempt: {attempt + 1}")
+            prompt = format_prompt(ingredients, dietary_concerns)
 
-    except OpenAIError as e:
-        logging.error(f"OpenAI API error: {e}")
-        return {"success": False, "error": "Failed to contact OpenAI service"}
-    except Exception as e:
-        logging.error(f"Unexpected error in generate_recipe: {e}")
-        return {"success": False, "error": "Internal server error"}
+            # Call OpenAI API
+            response = client.chat.completions.create(
+                model="gpt-3.5-turbo",
+                messages=[
+                    {
+                        "role": "system",
+                        "content": (
+                            "You are a professional chef. Provide recipes in a structured JSON format with the following: "
+                            "recipe_name, cooking_time, ingredients, instructions, nutritional_info (calories, protein, fat, carbohydrates), and cooking_tips."
+                        )
+                    },
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.2,  # Lower temperature for deterministic output
+                top_p=0.9
+            )
+
+            # Log token usage
+            prompt_tokens = response.usage.prompt_tokens
+            completion_tokens = response.usage.completion_tokens
+            total_tokens = response.usage.total_tokens
+
+            logging.info(
+                f"Token usage - Prompt: {prompt_tokens}, Completion: {completion_tokens}, Total: {total_tokens}")
+
+            # Validate JSON response
+            response_content = response.choices[0].message.content.strip()
+            recipe = validate_json(response_content)
+            if recipe:
+                logging.info("Recipe successfully validated and received from OpenAI")
+                return {"success": True, "recipe": recipe, "dietary_concerns": dietary_concerns or "None specified"}
+            else:
+                logging.warning("Invalid recipe format received, retrying...")
+
+        except OpenAIError as e:
+            logging.error(f"OpenAI API error: {e}")
+        except Exception as e:
+            logging.error(f"Unexpected error in generate_recipe: {e}")
+
+        # Retry logic
+        time.sleep(delay)
+
+    return {"success": False, "error": "Failed to generate a valid recipe after retries"}
 
 
 if __name__ == "__main__":
