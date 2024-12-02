@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify, session, send_from_directory
 from .chatgptAPI import generate_recipe
 import logging
 from werkzeug.security import check_password_hash
@@ -11,7 +11,7 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def home():
-    return "GPT API Challenge"
+    return send_from_directory('static', 'index.html')
 
 
 @main.route('/api/generate-recipe', methods=['POST'])
