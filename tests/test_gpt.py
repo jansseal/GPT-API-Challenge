@@ -132,6 +132,20 @@ def test_fridge_ingredient_number(test_client):
         assert data['error'] == "Please provide ingredients as a list"
 
 
+def test_fridge_ingredient_list_number(test_client):
+    # Test response when fridge_ingredient data type is int
+    with patch('backend.chatgptAPI.generate_recipe', return_value=None) as mock_generate_recipe:
+        response = test_client.post('/api/generate-recipe-from-fridge', json={
+            "fridge_ingredients": [43261],
+            "dietary_concerns": None
+        })
+
+        mock_generate_recipe.assert_not_called()
+        assert response.status_code == 500
+        data = response.get_json()
+        assert data['error'] == "Internal server error"
+
+
 def test_fridge_ingredient_string(test_client):
     # Test response when fridge_ingredient data type is string
     with patch('backend.chatgptAPI.generate_recipe', return_value=None) as mock_generate_recipe:
