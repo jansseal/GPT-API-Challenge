@@ -10,6 +10,7 @@
   let loading = false;
   let newItem = "";
   let dietaryPreference = "None";
+  let items = [];
 
   const dietaryOptions = [
     "None",
