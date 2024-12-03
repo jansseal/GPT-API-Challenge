@@ -1,17 +1,16 @@
 <script>
   import { navigate } from "svelte-routing";
+  import { user } from "../stores/user"; // Import user store
 
-  // State for sign-in status
-  let signedIn = false;
+  // Check user login state
+  $: signedIn = $user !== null;
 
-  // User input and dietary restriction
   let searchQuery = "";
   let selectedRestriction = "No Dietary Restrictions";
   let generatedRecipe = null;
   let errorMessage = "";
   let loading = false;
 
-  // Dietary restriction options
   const restrictions = [
     "No Dietary Restrictions",
     "Gluten Free",
@@ -28,18 +27,13 @@
 
   const BACKEND_URL = process.env.VITE_API_URL;
 
-  // Handle sign-in button click
-  function signIn() {
-    signedIn = true;
-    navigate("/my-fridge");
-  }
-
-  // Handle search button click
   async function searchRecipes() {
+
     const data = {
       ingredients: searchQuery,
       dietary_concerns: selectedRestriction || "None",
     };
+
     console.log("Sending to backend:", JSON.stringify(data));
 
     loading = true;
@@ -72,53 +66,9 @@
       loading = false;
     }
   }
-  // Expecting a list of ingredients
-  async function generateRecipeFromFridge(ingredientsList) {
-    if (!Array.isArray(ingredientsList) || ingredientsList.length === 0) {
-        errorMessage = "Please select ingredients from your fridge";
-        return;
-    }
-
-    const data = {
-        fridge_ingredients: ingredientsList,
-        dietary_concerns: selectedRestriction || "None",
-    };
-    console.log("Sending fridge ingredients to backend:", JSON.stringify(data));
-
-    loading = true;
-    errorMessage = "";
-    generatedRecipe = null;
-
-    try {
-        const response = await fetch(`${BACKEND_URL}/api/generate-recipe-from-fridge`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-            throw new Error("Network response was not ok");
-        }
-
-        const recipe = await response.json();
-        if (recipe.success) {
-            generatedRecipe = recipe.recipe;
-        } else {
-            errorMessage = recipe.error || "Failed to generate recipe from fridge ingredients";
-        }
-    } catch (error) {
-        console.error("There was a problem with the fetch operation:", error);
-        errorMessage = "An error occurred while generating the recipe.";
-    } finally {
-        loading = false;
-    }
-  }
 </script>
 
 <style>
-
   .page-container {
     display: flex;
     flex-direction: column;
@@ -129,14 +79,12 @@
     min-height: 100vh; /* Ensures it covers at least the viewport height */
     box-sizing: border-box; /* Includes padding in height calculations */
   }
-
   .title {
     font-size: 2.5em;
     font-weight: bold;
     margin-bottom: 20px;
     color: #388e3c;
   }
-
   .content {
     display: flex;
     justify-content: flex-start;
@@ -145,25 +93,21 @@
     align-items: center;
     padding: 20px;
   }
-
   .search-section {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
   }
-
   .prompt {
     font-size: 1.5em;
     font-weight: 500;
     margin-bottom: 10px;
   }
-
   .search-bar-container {
     display: flex;
     align-items: center;
     gap: 10px;
   }
-
   .search-input {
     padding: 0.8em;
     width: 300px;
@@ -172,14 +116,12 @@
     font-size: 1em;
     outline: none;
   }
-
   .restriction-dropdown {
     padding: 0.8em;
     border: 1px solid #388e3c;
     border-radius: 8px;
     font-size: 1em;
   }
-
   .search-button {
     padding: 0.7em;
     background-color: #388e3c;
@@ -189,11 +131,9 @@
     cursor: pointer;
     font-size: 1em;
   }
-
   .search-button:hover {
     background-color: #2e7d32;
   }
-
   .sign-in-button {
     position: absolute;
     top: 20px;
@@ -205,17 +145,14 @@
     border: none;
     cursor: pointer;
   }
-
   .sign-in-button:hover {
     background-color: #0056b3;
   }
-
   .sign-in-message {
     margin-top: 10px;
     font-size: 0.9em;
     color: #555;
   }
-
   .recipe-placeholder {
     margin-top: 20px;
     width: 90%;
@@ -232,27 +169,22 @@
     height: auto; /* Ensure the height adjusts to content */
     overflow: visible; /* Prevent clipping or scrolling */
   }
-
   .recipe-placeholder ul, .recipe-placeholder ol {
     margin: 10px 0;
     padding-left: 20px;
     list-style-position: inside; /* Keep items within the container */
   }
-
   .recipe-placeholder ul {
     list-style-type: disc; /* Standard bullet points */
   }
-
   .recipe-placeholder ol {
     list-style-type: decimal; /* Numbered steps for instructions */
   }
-
   .loading {
     margin: 10px 0;
     font-size: 1em;
     color: #388e3c;
   }
-
   .new-recipe-button {
     margin-top: 20px;
     padding: 0.7em;
@@ -263,16 +195,16 @@
     cursor: pointer;
     font-size: 1em;
   }
-
   .new-recipe-button:hover {
     background-color: #2e7d32;
   }
 </style>
 
+
 <div class="page-container">
   <!-- Sign-In Button -->
   {#if !signedIn}
-    <button class="sign-in-button" on:click={signIn}>
+    <button class="sign-in-button" on:click={() => navigate("/profile")}>
       Sign In
     </button>
   {/if}
@@ -313,6 +245,10 @@
         <div class="sign-in-message">
           Sign in to save ingredients for faster recipe suggestions.
         </div>
+      {:else}
+        <div class="sign-in-message">
+          Welcome back! Ready to generate a recipe?
+        </div>
       {/if}
     </div>
 
@@ -322,7 +258,7 @@
 
     {#if generatedRecipe}
       <div class="recipe-placeholder">
-        <!-- Recipe Name -->
+         <!-- Recipe Name -->
         <h2>{generatedRecipe.recipe_name || "Generated Recipe"}</h2>
 
         <!-- Cooking Time -->
